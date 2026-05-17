@@ -1,0 +1,1594 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sight Lines Calculator — SSS</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1321;
+    --surf: #131a2a;
+    --surf2: #1b2538;
+    --surf3: #232e44;
+    --border: #2a3450;
+    --border-soft: #1f293f;
+    --text: #e2e8f0;
+    --dim: #64748b;
+    --bright: #f1f5f9;
+    --accent: #3b82f6;
+    --accent-2: #38bdf8;
+    --sss-red: #d4202c;
+    --good: #34d399;
+    --good-bg: rgba(52, 211, 153, 0.12);
+    --ok: #fbbf24;
+    --ok-bg: rgba(251, 191, 36, 0.12);
+    --bad: #f87171;
+    --bad-bg: rgba(248, 113, 113, 0.12);
+    --eye: #fbbf24;
+    --sans: 'Barlow', sans-serif;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  /* ============ HEADER ============ */
+  header {
+    background: var(--surf);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  header .logo {
+    height: 56px;
+    width: auto;
+    mix-blend-mode: screen;
+    display: block;
+    flex-shrink: 0;
+  }
+  header .sep {
+    width: 1px;
+    height: 48px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+  header .title-block {
+    line-height: 1.15;
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-family: var(--sans);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--bright);
+    letter-spacing: -0.3px;
+    margin: 0;
+  }
+  header h1 .dot {
+    color: var(--sss-red);
+    margin: 0 6px;
+    font-weight: 400;
+  }
+  header h1 .arr {
+    color: var(--sss-red);
+    margin: 0 4px;
+    font-weight: 500;
+  }
+  header .sub {
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-weight: 500;
+  }
+  header .right {
+    margin-left: auto;
+    display: flex;
+    gap: 0;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  header .lang-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    cursor: pointer;
+    letter-spacing: 1.3px;
+    text-transform: uppercase;
+    font-weight: 500;
+    transition: all 0.15s;
+    border-right: 1px solid var(--border);
+  }
+  header .lang-btn:last-child { border-right: none; }
+  header .lang-btn.active {
+    background: var(--sss-red);
+    color: var(--bright);
+  }
+  header .lang-btn:hover:not(.active) {
+    background: var(--surf2);
+    color: var(--text);
+  }
+
+  /* ============ MAIN ============ */
+  main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 28px 32px 60px;
+  }
+
+  /* ============ SECTION HEADERS ============ */
+  .section-h {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin: 32px 0 16px;
+  }
+  .section-h .n {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--sss-red);
+    letter-spacing: 1.5px;
+    font-weight: 500;
+  }
+  .section-h h2 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0;
+    color: var(--bright);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .section-h .rule {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+  .section-h:first-of-type { margin-top: 12px; }
+
+  /* ============ CARDS ============ */
+  .inputs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 1000px) {
+    .inputs-grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--surf);
+    border: 1px solid var(--border);
+    padding: 20px 22px;
+    border-radius: 4px;
+  }
+  .card-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent-2);
+    margin-bottom: 4px;
+    font-weight: 500;
+  }
+  .card h3 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 15px;
+    margin: 0 0 18px;
+    color: var(--bright);
+    letter-spacing: 0.2px;
+    text-transform: uppercase;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 12px;
+  }
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .field label {
+    font-size: 12px;
+    color: var(--dim);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+  }
+  .field label .unit {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--dim);
+    opacity: 0.7;
+  }
+  .field input[type="number"], .field select {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 8px 11px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--bright);
+    width: 100%;
+    transition: all 0.15s;
+    border-radius: 3px;
+    outline: none;
+  }
+  .field input[type="number"]:focus, .field select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15);
+  }
+
+  .seg-control {
+    display: flex;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .seg-control button {
+    flex: 1;
+    padding: 8px 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 11px;
+    color: var(--dim);
+    transition: all 0.15s;
+    border-right: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+  .seg-control button:last-child { border-right: none; }
+  .seg-control button.active {
+    background: var(--accent);
+    color: var(--bright);
+  }
+  .seg-control button:hover:not(.active) {
+    background: var(--surf2);
+    color: var(--text);
+  }
+
+  /* ============ SUMMARY ============ */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+  }
+  @media (max-width: 800px) { .summary { grid-template-columns: repeat(2, 1fr); } }
+
+  .stat {
+    background: var(--surf);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .stat .label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--dim);
+  }
+  .stat .val {
+    font-family: var(--sans);
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--bright);
+    letter-spacing: -0.5px;
+  }
+  .stat .unit {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--dim);
+    margin-left: 4px;
+    font-weight: 400;
+  }
+  .stat.alert .val { color: var(--bad); }
+  .stat.good .val { color: var(--good); }
+  .stat.warn .val { color: var(--ok); }
+
+  .warnings {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .warn {
+    background: var(--bad-bg);
+    border-left: 3px solid var(--bad);
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--text);
+    border-radius: 0 3px 3px 0;
+  }
+  .warn.ok { background: var(--ok-bg); border-color: var(--ok); }
+  .warn b { font-family: var(--mono); color: var(--bright); font-weight: 600; }
+
+  /* ============ VIZ ============ */
+  .viz-wrap {
+    background: var(--surf);
+    border: 1px solid var(--border);
+    padding: 18px;
+    border-radius: 4px;
+  }
+  .viz-wrap svg {
+    width: 100%;
+    height: auto;
+    max-height: 560px;
+    display: block;
+  }
+
+  .legend {
+    display: flex;
+    gap: 22px;
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--dim);
+    flex-wrap: wrap;
+    font-family: var(--mono);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .legend-dot {
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    border: 1px solid var(--bg);
+  }
+  .legend-dot.green { background: var(--good); }
+  .legend-dot.yellow { background: var(--ok); }
+  .legend-dot.red { background: var(--bad); }
+  .legend-dot.neutral { background: var(--surf2); border-color: var(--dim); }
+
+  .svg-grid { stroke: var(--border-soft); stroke-width: 0.5; }
+  .svg-axis { stroke: var(--dim); stroke-width: 1; opacity: 0.6; }
+  .svg-axislabel { font-family: var(--mono); font-size: 9.5px; fill: var(--dim); }
+  .svg-axistitle { font-family: var(--mono); font-size: 10px; fill: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
+  .svg-stage { fill: var(--surf3); stroke: var(--bright); stroke-width: 1.2; }
+  .svg-stage-hatch { stroke: var(--dim); stroke-width: 0.5; opacity: 0.4; }
+  .svg-floor { fill: none; stroke: var(--bright); stroke-width: 1.8; stroke-linejoin: miter; }
+  .svg-floor-fill { fill: var(--surf2); opacity: 0.6; }
+  .svg-sight { stroke: var(--accent); stroke-width: 0.8; stroke-dasharray: 3 3; opacity: 0.35; }
+  .svg-sight.hl { stroke: var(--accent-2); stroke-width: 1.4; opacity: 0.95; stroke-dasharray: 4 2; }
+  .svg-body { stroke: var(--text); stroke-width: 2.3; stroke-linecap: round; opacity: 0.9; }
+  .svg-eye { fill: var(--eye); stroke: var(--bg); stroke-width: 0.8; }
+  .svg-head { stroke: var(--bg); stroke-width: 0.8; }
+  .svg-head.green { fill: var(--good); }
+  .svg-head.yellow { fill: var(--ok); }
+  .svg-head.red { fill: var(--bad); }
+  .svg-head.first { fill: var(--dim); }
+  .svg-rowlabel { font-family: var(--mono); font-size: 9px; fill: var(--dim); text-anchor: middle; font-weight: 500; }
+  .svg-star { fill: var(--sss-red); stroke: var(--bright); stroke-width: 1.2; }
+  .svg-aisle { fill: var(--sss-red); opacity: 0.13; }
+  .svg-aisle-label { font-family: var(--mono); font-size: 9px; fill: var(--sss-red); text-anchor: middle; letter-spacing: 0.8px; text-transform: uppercase; opacity: 0.9; }
+  .svg-dim { stroke: var(--accent-2); stroke-width: 0.9; opacity: 0.8; }
+  .svg-dim-tick { stroke: var(--accent-2); stroke-width: 0.9; opacity: 0.8; }
+  .svg-dim-text { font-family: var(--mono); font-size: 10.5px; fill: var(--accent-2); font-weight: 500; }
+  .svg-dim-text-bg { fill: var(--surf); }
+
+  /* ============ TABLE ============ */
+  .table-wrap {
+    background: var(--surf);
+    border: 1px solid var(--border);
+    overflow-x: auto;
+    border-radius: 4px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-family: var(--mono);
+  }
+  th {
+    text-align: left;
+    padding: 11px 12px;
+    font-family: var(--sans);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--dim);
+    font-weight: 600;
+    background: var(--surf2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-soft);
+    color: var(--text);
+  }
+  tbody tr:hover { background: var(--surf2); }
+  tbody tr.hl { background: rgba(56, 189, 248, 0.08); }
+  td.num { text-align: right; color: var(--bright); }
+  td.center { text-align: center; }
+
+  td input.cell {
+    width: 72px;
+    padding: 5px 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--bright);
+    text-align: right;
+    border-radius: 2px;
+    outline: none;
+  }
+  td input.cell:focus { border-color: var(--accent); }
+  td input.cell.mod {
+    background: rgba(212, 32, 44, 0.1);
+    color: var(--sss-red);
+    border-color: var(--sss-red);
+    font-weight: 600;
+  }
+
+  .c-pill {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid;
+    letter-spacing: 0.3px;
+  }
+  .c-pill.green { background: var(--good-bg); color: var(--good); border-color: var(--good); }
+  .c-pill.yellow { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
+  .c-pill.red { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+  .c-pill.muted { background: var(--surf2); color: var(--dim); border-color: var(--border); }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 7px;
+    background: rgba(212, 32, 44, 0.15);
+    color: var(--sss-red);
+    font-size: 10px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-right: 4px;
+    border-radius: 2px;
+    border: 1px solid rgba(212, 32, 44, 0.4);
+  }
+  .tag.aisle { background: var(--ok-bg); color: var(--ok); border-color: rgba(251,191,36,0.4); }
+
+  .btn-reset {
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 3px 9px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--dim);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  .btn-reset:hover { background: var(--sss-red); color: var(--bright); border-color: var(--sss-red); }
+  .btn-reset:disabled { opacity: 0.25; cursor: default; }
+
+  /* ============ ACTIONS ============ */
+  .actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 9px 16px;
+    background: var(--accent);
+    color: var(--bright);
+    border: 1px solid var(--accent);
+    font-family: var(--sans);
+    font-size: 11.5px;
+    letter-spacing: 1.2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    font-weight: 600;
+    border-radius: 3px;
+  }
+  .btn:hover { background: var(--accent-2); border-color: var(--accent-2); }
+  .btn.secondary {
+    background: transparent;
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .btn.secondary:hover { background: var(--surf2); color: var(--bright); border-color: var(--text); }
+
+  /* ============ GUIDE ============ */
+  .guide-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 900px) { .guide-grid { grid-template-columns: 1fr; } }
+
+  .guide {
+    background: var(--surf);
+    border: 1px solid var(--border);
+    padding: 22px 24px;
+    border-radius: 4px;
+  }
+  .guide .step-no {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--sss-red);
+    letter-spacing: 1.5px;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .guide h4 {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 16px;
+    margin: 0 0 10px;
+    color: var(--bright);
+    letter-spacing: 0.2px;
+  }
+  .guide p {
+    color: var(--text);
+    font-size: 13px;
+    margin: 8px 0;
+    line-height: 1.6;
+  }
+  .guide ul {
+    color: var(--text);
+    font-size: 13px;
+    padding-left: 18px;
+    margin: 8px 0;
+    line-height: 1.7;
+  }
+  .guide code {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--bg);
+    padding: 2px 6px;
+    color: var(--accent-2);
+    border-radius: 2px;
+  }
+  .guide b { color: var(--bright); font-weight: 600; }
+  .formula {
+    font-family: var(--mono);
+    font-size: 14px;
+    text-align: center;
+    background: var(--bg);
+    padding: 14px;
+    margin: 12px 0;
+    border-left: 3px solid var(--accent-2);
+    color: var(--bright);
+    border-radius: 0 3px 3px 0;
+  }
+  .formula sub { font-size: 10px; }
+  .c-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin: 12px 0;
+  }
+  .c-mini {
+    padding: 10px;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 11px;
+    border-radius: 2px;
+  }
+  .c-mini.green { background: var(--good-bg); color: var(--good); border: 1px solid var(--good); }
+  .c-mini.yellow { background: var(--ok-bg); color: var(--ok); border: 1px solid var(--ok); }
+  .c-mini.red { background: var(--bad-bg); color: var(--bad); border: 1px solid var(--bad); }
+  .c-mini b { display: block; font-size: 14px; margin-bottom: 4px; color: inherit; }
+
+  /* ============ FOOTER ============ */
+  footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <img src="data:image/png;base64,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" alt="Studio Sound Service" class="logo">
+  <div class="sep"></div>
+  <div class="title-block">
+    <h1>Sight Lines<span class="dot">·</span>Calculator</h1>
+    <div class="sub" data-i18n="subtitle">Curva isocidona · linee di vista</div>
+  </div>
+  <div class="right">
+    <button class="lang-btn active" data-lang="it">IT</button>
+    <button class="lang-btn" data-lang="en">EN</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ===== INPUTS ===== -->
+  <div class="section-h">
+    <span class="n">01</span>
+    <h2 data-i18n="sec1">Parametri di progetto</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="inputs-grid">
+
+    <div class="card">
+      <div class="card-tag" data-i18n="card1_tag">Geometria</div>
+      <h3 data-i18n="card1_title">Sala e palco</h3>
+
+      <div class="field">
+        <label><span data-i18n="lab_roomLength">Lunghezza utile sala</span><span class="unit">m</span></label>
+        <input type="number" id="in-roomLength" value="18" step="0.5" min="3">
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label><span data-i18n="lab_firstRowX">Distanza orizz. prima fila</span><span class="unit">m</span></label>
+          <input type="number" id="in-firstRowX" value="4.0" step="0.1" min="0.5">
+        </div>
+        <div class="field">
+          <label><span data-i18n="lab_stageHeight">Altezza punto focale</span><span class="unit">m</span></label>
+          <input type="number" id="in-stageHeight" value="1.07" step="0.05" min="0">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label><span data-i18n="lab_stageDepth">Profondità palco (viz)</span><span class="unit">m</span></label>
+          <input type="number" id="in-stageDepth" value="3.0" step="0.5" min="1">
+        </div>
+        <div class="field">
+          <label><span data-i18n="lab_focalType">Tipo punto focale</span></label>
+          <select id="in-focalType">
+            <option value="stage" data-i18n="focal_stage">Bordo palco (proscenio)</option>
+            <option value="screen" data-i18n="focal_screen">Bordo inf. schermo</option>
+            <option value="floor" data-i18n="focal_floor">Pavimento palco</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-tag" data-i18n="card2_tag">File</div>
+      <h3 data-i18n="card2_title">Sedute e gradoni</h3>
+
+      <div class="field-row">
+        <div class="field">
+          <label><span data-i18n="lab_numRows">Numero file</span></label>
+          <input type="number" id="in-numRows" value="10" step="1" min="2" max="40">
+        </div>
+        <div class="field">
+          <label><span data-i18n="lab_rowSpacing">Interfila (pedata)</span><span class="unit">m</span></label>
+          <input type="number" id="in-rowSpacing" value="0.9" step="0.05" min="0.85" max="1.2">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label><span data-i18n="lab_defaultStep">Alzata standard</span><span class="unit">mm</span></label>
+          <input type="number" id="in-defaultStep" value="120" step="5" min="0" max="250">
+        </div>
+        <div class="field">
+          <label><span data-i18n="lab_eyeHeight">Altezza occhio seduto</span><span class="unit">mm</span></label>
+          <input type="number" id="in-eyeHeight" value="1120" step="10" min="900" max="1300">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-tag" data-i18n="card3_tag">Modalità</div>
+      <h3 data-i18n="card3_title">Calcolo valore C</h3>
+
+      <div class="field">
+        <label><span data-i18n="lab_mode">Disposizione sedute</span></label>
+        <div class="seg-control" id="seg-mode">
+          <button data-value="inline" class="active" data-i18n="mode_inline">Allineata</button>
+          <button data-value="staggered" data-i18n="mode_staggered">Quinconce</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label><span data-i18n="lab_headOffset">Sommità testa sopra occhio</span><span class="unit">mm</span></label>
+        <input type="number" id="in-headOffset" value="120" step="5" min="80" max="200">
+      </div>
+
+      <div class="actions">
+        <button class="btn secondary" id="btn-reset" data-i18n="btn_reset">Reset override</button>
+        <button class="btn" id="btn-add-aisle" data-i18n="btn_aisle">+ Corridoio</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SUMMARY ===== -->
+  <div class="section-h">
+    <span class="n">02</span>
+    <h2 data-i18n="sec2">Sintesi</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="summary" id="summary"></div>
+  <div class="warnings" id="warnings"></div>
+
+  <!-- ===== VIZ ===== -->
+  <div class="section-h">
+    <span class="n">03</span>
+    <h2 data-i18n="sec3">Ricostruzione grafica</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="viz-wrap">
+    <svg id="viz" viewBox="0 0 1200 560" preserveAspectRatio="xMidYMid meet"></svg>
+  </div>
+
+  <div class="legend">
+    <span class="legend-item"><span class="legend-dot green"></span>C ≥ 120 mm · <span data-i18n="leg_optimal">Ottimale</span></span>
+    <span class="legend-item"><span class="legend-dot yellow"></span>60 ≤ C &lt; 120 mm · <span data-i18n="leg_good">Buono / quinconce</span></span>
+    <span class="legend-item"><span class="legend-dot red"></span>C &lt; 60 mm · <span data-i18n="leg_insufficient">Insufficiente</span></span>
+    <span class="legend-item"><span class="legend-dot neutral"></span><span data-i18n="leg_first">Prima fila (riferimento)</span></span>
+  </div>
+
+  <!-- ===== TABLE ===== -->
+  <div class="section-h">
+    <span class="n">04</span>
+    <h2 data-i18n="sec4">Tabella di dettaglio</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th data-i18n="th_row">Fila</th>
+          <th data-i18n="th_spacing">Interfila (m)</th>
+          <th data-i18n="th_step">Alzata (mm)</th>
+          <th class="num">X (m)</th>
+          <th class="num" data-i18n="th_yfloor">Y pav (m)</th>
+          <th class="num" data-i18n="th_yeye">Y occhio (m)</th>
+          <th class="num" data-i18n="th_slope">Pendenza</th>
+          <th data-i18n="th_c">Valore C</th>
+          <th data-i18n="th_notes">Note</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- ===== GUIDE ===== -->
+  <div class="section-h">
+    <span class="n">05</span>
+    <h2 data-i18n="sec5">Guida passo-passo</h2>
+    <span class="rule"></span>
+  </div>
+
+  <div class="guide-grid">
+
+    <div class="guide">
+      <div class="step-no" data-i18n="g1_no">01 · Concetto</div>
+      <h4 data-i18n="g1_h">Il valore C — costante di visibilità</h4>
+      <p data-i18n-html="g1_p1">Il <b>Valore C</b> è la distanza verticale tra la linea di vista di uno spettatore (occhio → punto focale) e la sommità della testa dello spettatore della fila immediatamente precedente. È il parametro chiave della progettazione delle linee di vista.</p>
+      <div class="c-mini-grid">
+        <div class="c-mini red"><b>&lt; 60 mm</b><span data-i18n="c_insuff">Insufficiente</span></div>
+        <div class="c-mini yellow"><b>60–120 mm</b><span data-i18n="c_stagg">Quinconce</span></div>
+        <div class="c-mini green"><b>≥ 120 mm</b><span data-i18n="c_opt">Ottimale</span></div>
+      </div>
+      <p data-i18n-html="g1_p2">Standard internazionali: <code>120 mm</code> per cinema e teatri lirici, <code>90 mm</code> per teatri di prosa con sedute sfalsate, <code>60 mm</code> come minimo assoluto con disposizione a quinconce stretto.</p>
+    </div>
+
+    <div class="guide">
+      <div class="step-no" data-i18n="g2_no">02 · Geometria</div>
+      <h4 data-i18n="g2_h">La curva isocidona</h4>
+      <p data-i18n-html="g2_p1">La pendenza ideale del pavimento non è una retta ma una <b>curva logaritmica progressiva</b>: più ci si allontana dal palco, più la pendenza deve aumentare, perché l'angolo visivo si schiaccia.</p>
+      <div class="formula">Y<sub>n+1</sub> = X<sub>n+1</sub> · (Y<sub>n</sub> + C) / X<sub>n</sub></div>
+      <p data-i18n-html="g2_p2">Dove <code>X</code> è la distanza orizzontale dal punto focale, <code>Y</code> è l'altezza dell'occhio sopra il punto focale e <code>C</code> è la costante di visibilità desiderata. Il tool risolve il problema inverso: <b>dati pedata e alzata, calcola il C effettivo</b> per ogni fila.</p>
+    </div>
+
+    <div class="guide">
+      <div class="step-no" data-i18n="g3_no">03 · Disposizione</div>
+      <h4 data-i18n="g3_h">Allineato vs Quinconce</h4>
+      <p data-i18n-html="g3_p1"><b>Allineato (in-line):</b> tutti i sedili in colonna. Lo spettatore guarda esattamente sopra la testa di chi ha davanti. Richiede <code>C ≥ 120 mm</code> reale, con platee molto ripide.</p>
+      <p data-i18n-html="g3_p2"><b>Sfalsato (quinconce):</b> file pari e dispari sfalsate di mezzo sedile. Lo spettatore guarda <em>tra</em> due teste; l'ostacolo geometrico è la fila a <code>2d</code>. Il C immediato può scendere a 60–80 mm dimezzando la pendenza totale.</p>
+    </div>
+
+    <div class="guide">
+      <div class="step-no" data-i18n="g4_no">04 · Corridoio trasversale</div>
+      <h4 data-i18n="g4_h">La fila più sfortunata</h4>
+      <p data-i18n-html="g4_p1">Quando un corridoio trasversale separa due file, la distanza orizzontale tra le sedute aumenta. A parità di alzata, il C cala. <b>La prima fila dopo un corridoio è quasi sempre la più critica</b>: occorre aumentare la sua alzata (o accettare un C inferiore).</p>
+      <p data-i18n-html="g4_p2">Premi <code>+ Corridoio</code> per inserire un corridoio prima di una fila, oppure modifica direttamente l'interfila nella tabella. Il tool segnala automaticamente le file critiche.</p>
+    </div>
+
+    <div class="guide">
+      <div class="step-no" data-i18n="g5_no">05 · Vincoli</div>
+      <h4 data-i18n="g5_h">Pendenze, alzate, accessibilità</h4>
+      <ul data-i18n-html="g5_list">
+        <li><b>Interfila</b> ≥ 850 mm (minimo); 900–1050 mm consigliato.</li>
+        <li><b>Alzata</b> 40 mm minimo, 200 mm massimo; oltre, servono gradini intermedi.</li>
+        <li>Pendenza fino a <b>8%</b>: scivolo continuo (accessibilità totale).</li>
+        <li>Pendenza oltre 8%: gradini obbligatori nei corridoi laterali.</li>
+        <li>Pendenza massima generalmente <b>≈ 35%</b> (19°) per sicurezza.</li>
+        <li>Gradini nei corridoi: legge di Blondel <code>2A + P = 62–64 cm</code>.</li>
+      </ul>
+    </div>
+
+    <div class="guide">
+      <div class="step-no" data-i18n="g6_no">06 · Workflow</div>
+      <h4 data-i18n="g6_h">Come usare il tool</h4>
+      <ul data-i18n-html="g6_list">
+        <li>Imposta la <b>geometria base</b>: distanza orizzontale e altezza del punto focale, numero di file.</li>
+        <li>Definisci <b>interfila</b> e <b>alzata standard</b> come parametri uniformi di partenza.</li>
+        <li>Scegli <b>allineato</b> o <b>quinconce</b>: cambia il calcolo del C effettivo.</li>
+        <li>Modifica in <b>tabella</b> alzata o interfila di singole file per ottimizzare il C.</li>
+        <li>Aggiungi un <b>corridoio</b> per inserire un'interruzione (l'interfila della fila successiva crescerà).</li>
+        <li>Verifica il <b>semaforo</b>: tutto verde è obiettivo; giallo tollerabile solo con quinconce.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <footer>
+    <div>Studio Sound Service S.r.l. · Impruneta (FI) · since 1983</div>
+    <div>Sight Lines Tool · self-contained html · v1.2</div>
+  </footer>
+
+</main>
+
+<script>
+'use strict';
+
+// ============================================================
+//   I18N — Translations
+// ============================================================
+const I18N = {
+  it: {
+    subtitle: 'Curva isocidona · linee di vista',
+    sec1: 'Parametri di progetto',
+    sec2: 'Sintesi',
+    sec3: 'Ricostruzione grafica',
+    sec4: 'Tabella di dettaglio',
+    sec5: 'Guida passo-passo',
+
+    card1_tag: 'Geometria',
+    card1_title: 'Sala e palco',
+    lab_roomLength: 'Lunghezza utile sala',
+    lab_firstRowX: 'Distanza orizz. prima fila',
+    lab_stageHeight: 'Altezza punto focale',
+    lab_stageDepth: 'Profondità palco (viz)',
+    lab_focalType: 'Tipo punto focale',
+    focal_stage: 'Bordo palco (proscenio)',
+    focal_screen: 'Bordo inf. schermo',
+    focal_floor: 'Pavimento palco',
+
+    card2_tag: 'File',
+    card2_title: 'Sedute e gradoni',
+    lab_numRows: 'Numero file',
+    lab_rowSpacing: 'Interfila (pedata)',
+    lab_defaultStep: 'Alzata standard',
+    lab_eyeHeight: 'Altezza occhio seduto',
+
+    card3_tag: 'Modalità',
+    card3_title: 'Calcolo valore C',
+    lab_mode: 'Disposizione sedute',
+    mode_inline: 'Allineata',
+    mode_staggered: 'Quinconce',
+    lab_headOffset: 'Sommità testa sopra occhio',
+    btn_reset: 'Reset override',
+    btn_aisle: '+ Corridoio',
+
+    stat_avgC: 'C medio',
+    stat_minC: 'C minimo',
+    stat_maxSlope: 'Pendenza max',
+    stat_totalRise: 'Salita totale',
+
+    leg_optimal: 'Ottimale',
+    leg_good: 'Buono / quinconce',
+    leg_insufficient: 'Insufficiente',
+    leg_first: 'Prima fila (riferimento)',
+
+    th_row: 'Fila',
+    th_spacing: 'Interfila (m)',
+    th_step: 'Alzata (mm)',
+    th_yfloor: 'Y pav (m)',
+    th_yeye: 'Y occhio (m)',
+    th_slope: 'Pendenza',
+    th_c: 'Valore C',
+    th_notes: 'Note',
+
+    tag_aisle: 'corridoio',
+    tag_critical: 'critica',
+    label_focal: 'PUNTO FOCALE',
+    axis_h: 'Distanza orizzontale [m]',
+    axis_v: 'Quota [m]',
+    svg_aisle: 'corridoio',
+
+    btn_reset_row: 'reset',
+
+    g1_no: '01 · Concetto',
+    g1_h: 'Il valore C — costante di visibilità',
+    g1_p1: 'Il <b>Valore C</b> è la distanza verticale tra la linea di vista di uno spettatore (occhio → punto focale) e la sommità della testa dello spettatore della fila immediatamente precedente. È il parametro chiave della progettazione delle linee di vista.',
+    g1_p2: 'Standard internazionali: <code>120 mm</code> per cinema e teatri lirici, <code>90 mm</code> per teatri di prosa con sedute sfalsate, <code>60 mm</code> come minimo assoluto con disposizione a quinconce stretto.',
+    c_insuff: 'Insufficiente',
+    c_stagg: 'Quinconce',
+    c_opt: 'Ottimale',
+
+    g2_no: '02 · Geometria',
+    g2_h: 'La curva isocidona',
+    g2_p1: 'La pendenza ideale del pavimento non è una retta ma una <b>curva logaritmica progressiva</b>: più ci si allontana dal palco, più la pendenza deve aumentare, perché l\'angolo visivo si schiaccia.',
+    g2_p2: 'Dove <code>X</code> è la distanza orizzontale dal punto focale, <code>Y</code> è l\'altezza dell\'occhio sopra il punto focale e <code>C</code> è la costante di visibilità desiderata. Il tool risolve il problema inverso: <b>dati pedata e alzata, calcola il C effettivo</b> per ogni fila.',
+
+    g3_no: '03 · Disposizione',
+    g3_h: 'Allineato vs Quinconce',
+    g3_p1: '<b>Allineato (in-line):</b> tutti i sedili in colonna. Lo spettatore guarda esattamente sopra la testa di chi ha davanti. Richiede <code>C ≥ 120 mm</code> reale, con platee molto ripide.',
+    g3_p2: '<b>Sfalsato (quinconce):</b> file pari e dispari sfalsate di mezzo sedile. Lo spettatore guarda <em>tra</em> due teste; l\'ostacolo geometrico è la fila a <code>2d</code>. Il C immediato può scendere a 60–80 mm dimezzando la pendenza totale.',
+
+    g4_no: '04 · Corridoio trasversale',
+    g4_h: 'La fila più sfortunata',
+    g4_p1: 'Quando un corridoio trasversale separa due file, la distanza orizzontale tra le sedute aumenta. A parità di alzata, il C cala. <b>La prima fila dopo un corridoio è quasi sempre la più critica</b>: occorre aumentare la sua alzata (o accettare un C inferiore).',
+    g4_p2: 'Premi <code>+ Corridoio</code> per inserire un corridoio prima di una fila, oppure modifica direttamente l\'interfila nella tabella. Il tool segnala automaticamente le file critiche.',
+
+    g5_no: '05 · Vincoli',
+    g5_h: 'Pendenze, alzate, accessibilità',
+    g5_list: '<li><b>Interfila</b> ≥ 850 mm (minimo); 900–1050 mm consigliato.</li><li><b>Alzata</b> 40 mm minimo, 200 mm massimo; oltre, servono gradini intermedi.</li><li>Pendenza fino a <b>8%</b>: scivolo continuo (accessibilità totale).</li><li>Pendenza oltre 8%: gradini obbligatori nei corridoi laterali.</li><li>Pendenza massima generalmente <b>≈ 35%</b> (19°) per sicurezza.</li><li>Gradini nei corridoi: legge di Blondel <code>2A + P = 62–64 cm</code>.</li>',
+
+    g6_no: '06 · Workflow',
+    g6_h: 'Come usare il tool',
+    g6_list: '<li>Imposta la <b>geometria base</b>: distanza orizzontale e altezza del punto focale, numero di file.</li><li>Definisci <b>interfila</b> e <b>alzata standard</b> come parametri uniformi di partenza.</li><li>Scegli <b>allineato</b> o <b>quinconce</b>: cambia il calcolo del C effettivo.</li><li>Modifica in <b>tabella</b> alzata o interfila di singole file per ottimizzare il C.</li><li>Aggiungi un <b>corridoio</b> per inserire un\'interruzione (l\'interfila della fila successiva crescerà).</li><li>Verifica il <b>semaforo</b>: tutto verde è obiettivo; giallo tollerabile solo con quinconce.</li>',
+
+    warn_riser: 'Fila <b>F{N}</b>: alzata di <b>{V} mm</b> > 200 mm. Inserire gradini intermedi nei corridoi.',
+    warn_slope_unsafe: 'Pendenza massima <b>{V}%</b> > 35%: superato limite di sicurezza.',
+    warn_slope_steps: 'Pendenza <b>{V}%</b> > 8%: gradini obbligatori nei corridoi laterali.',
+    warn_spacing: 'Interfila <b>{V} mm</b> < 850 mm minimo normativo.',
+    warn_badrows: '{N} fila/e con C insufficiente (&lt; 60 mm): file <b>{R}</b>.',
+
+    prompt_aisleRow: 'Inserisci un corridoio PRIMA della fila numero (2–{N}):',
+    prompt_invalidRow: 'Fila non valida.',
+    prompt_aisleWidth: 'Larghezza del corridoio (m):',
+    prompt_invalidWidth: 'Larghezza non valida (minimo 0.5 m).',
+  },
+
+  en: {
+    subtitle: 'Isacoustic curve · sight lines',
+    sec1: 'Project parameters',
+    sec2: 'Summary',
+    sec3: 'Graphical reconstruction',
+    sec4: 'Detail table',
+    sec5: 'Step-by-step guide',
+
+    card1_tag: 'Geometry',
+    card1_title: 'Room and stage',
+    lab_roomLength: 'Useful room length',
+    lab_firstRowX: 'First row distance (horiz.)',
+    lab_stageHeight: 'Focal point height',
+    lab_stageDepth: 'Stage depth (viz)',
+    lab_focalType: 'Focal point type',
+    focal_stage: 'Stage edge (proscenium)',
+    focal_screen: 'Screen lower edge',
+    focal_floor: 'Stage floor',
+
+    card2_tag: 'Rows',
+    card2_title: 'Seats and steps',
+    lab_numRows: 'Number of rows',
+    lab_rowSpacing: 'Row spacing (tread)',
+    lab_defaultStep: 'Standard riser',
+    lab_eyeHeight: 'Seated eye height',
+
+    card3_tag: 'Mode',
+    card3_title: 'C value calculation',
+    lab_mode: 'Seat arrangement',
+    mode_inline: 'In-line',
+    mode_staggered: 'Staggered',
+    lab_headOffset: 'Head top above eye',
+    btn_reset: 'Reset overrides',
+    btn_aisle: '+ Aisle',
+
+    stat_avgC: 'Avg C',
+    stat_minC: 'Min C',
+    stat_maxSlope: 'Max slope',
+    stat_totalRise: 'Total rise',
+
+    leg_optimal: 'Optimal',
+    leg_good: 'Good / staggered',
+    leg_insufficient: 'Insufficient',
+    leg_first: 'First row (reference)',
+
+    th_row: 'Row',
+    th_spacing: 'Spacing (m)',
+    th_step: 'Riser (mm)',
+    th_yfloor: 'Y floor (m)',
+    th_yeye: 'Y eye (m)',
+    th_slope: 'Slope',
+    th_c: 'C value',
+    th_notes: 'Notes',
+
+    tag_aisle: 'aisle',
+    tag_critical: 'critical',
+    label_focal: 'FOCAL POINT',
+    axis_h: 'Horizontal distance [m]',
+    axis_v: 'Height [m]',
+    svg_aisle: 'aisle',
+
+    btn_reset_row: 'reset',
+
+    g1_no: '01 · Concept',
+    g1_h: 'The C value — visibility constant',
+    g1_p1: 'The <b>C value</b> is the vertical distance between a spectator\'s sight line (eye → focal point) and the top of the head of the spectator in the row immediately in front. It is the key parameter in sight line design.',
+    g1_p2: 'International standards: <code>120 mm</code> for cinemas and opera houses, <code>90 mm</code> for drama theaters with staggered seating, <code>60 mm</code> as absolute minimum with tight staggered layout.',
+    c_insuff: 'Insufficient',
+    c_stagg: 'Staggered',
+    c_opt: 'Optimal',
+
+    g2_no: '02 · Geometry',
+    g2_h: 'The isacoustic curve',
+    g2_p1: 'The ideal floor rake is not a straight line but a <b>progressive logarithmic curve</b>: the further from the stage, the steeper the rake must be, because the viewing angle flattens out.',
+    g2_p2: 'Where <code>X</code> is the horizontal distance from the focal point, <code>Y</code> is the eye height above the focal point and <code>C</code> is the target visibility constant. The tool solves the inverse problem: <b>given tread and riser, it computes the effective C</b> for each row.',
+
+    g3_no: '03 · Layout',
+    g3_h: 'In-line vs Staggered',
+    g3_p1: '<b>In-line:</b> all seats in column. The spectator looks exactly above the head of the row in front. Requires real <code>C ≥ 120 mm</code>, with very steep raked floors.',
+    g3_p2: '<b>Staggered:</b> odd and even rows offset by half a seat. The spectator looks <em>between</em> two heads; the geometric obstacle is the row at <code>2d</code>. The immediate C can drop to 60–80 mm, halving the total rake.',
+
+    g4_no: '04 · Cross aisle',
+    g4_h: 'The unlucky row',
+    g4_p1: 'When a cross aisle separates two rows, the horizontal distance between seats increases. With the same riser, C drops. <b>The first row after an aisle is almost always the most critical</b>: its riser must be increased (or a lower C accepted).',
+    g4_p2: 'Click <code>+ Aisle</code> to insert an aisle before a row, or edit the row spacing directly in the table. The tool automatically flags critical rows.',
+
+    g5_no: '05 · Constraints',
+    g5_h: 'Slopes, risers, accessibility',
+    g5_list: '<li><b>Row spacing</b> ≥ 850 mm (min); 900–1050 mm recommended.</li><li><b>Riser</b> 40 mm min, 200 mm max; beyond, intermediate steps are needed.</li><li>Slope up to <b>8%</b>: continuous ramp (full accessibility).</li><li>Slope above 8%: steps mandatory in side aisles.</li><li>Maximum slope typically <b>≈ 35%</b> (19°) for safety.</li><li>Aisle steps: Blondel rule <code>2A + P = 62–64 cm</code>.</li>',
+
+    g6_no: '06 · Workflow',
+    g6_h: 'How to use the tool',
+    g6_list: '<li>Set the <b>base geometry</b>: horizontal distance and height of focal point, number of rows.</li><li>Define <b>row spacing</b> and <b>standard riser</b> as uniform starting parameters.</li><li>Choose <b>in-line</b> or <b>staggered</b>: changes the effective C calculation.</li><li>Edit individual rows\' <b>riser</b> or <b>spacing</b> in the table to optimize C.</li><li>Add an <b>aisle</b> to insert an interruption (the next row\'s spacing will grow).</li><li>Check the <b>traffic light</b>: all green is the goal; yellow tolerable only with staggered layout.</li>',
+
+    warn_riser: 'Row <b>F{N}</b>: riser of <b>{V} mm</b> > 200 mm. Insert intermediate steps in aisles.',
+    warn_slope_unsafe: 'Max slope <b>{V}%</b> > 35%: safety limit exceeded.',
+    warn_slope_steps: 'Slope <b>{V}%</b> > 8%: steps mandatory in side aisles.',
+    warn_spacing: 'Row spacing <b>{V} mm</b> < 850 mm regulatory minimum.',
+    warn_badrows: '{N} row(s) with insufficient C (&lt; 60 mm): rows <b>{R}</b>.',
+
+    prompt_aisleRow: 'Insert an aisle BEFORE row number (2–{N}):',
+    prompt_invalidRow: 'Invalid row.',
+    prompt_aisleWidth: 'Aisle width (m):',
+    prompt_invalidWidth: 'Invalid width (min 0.5 m).',
+  }
+};
+
+function T(key, vars = {}) {
+  let s = I18N[state.lang][key];
+  if (s === undefined) return key;
+  Object.keys(vars).forEach(k => { s = s.replace(new RegExp(`\\{${k}\\}`, 'g'), vars[k]); });
+  return s;
+}
+
+function applyLanguage() {
+  document.documentElement.lang = state.lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const v = I18N[state.lang][key];
+    if (v !== undefined) el.textContent = v;
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    const v = I18N[state.lang][key];
+    if (v !== undefined) el.innerHTML = v;
+  });
+  // language buttons
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-lang') === state.lang);
+  });
+  // re-render dynamic content
+  render();
+}
+
+// ============================================================
+//   STATE
+// ============================================================
+const state = {
+  lang: 'it',
+  inputs: {
+    roomLength: 18,
+    firstRowX: 4.0,
+    stageHeight: 1.07,
+    stageDepth: 3.0,
+    focalType: 'stage',
+    numRows: 10,
+    rowSpacing: 0.9,
+    defaultStep: 120,
+    eyeHeight: 1120,
+    headOffset: 120,
+    mode: 'inline',
+  },
+  overrides: {},
+  hl: null,
+};
+
+// ============================================================
+//   COMPUTE
+// ============================================================
+function compute() {
+  const inp = state.inputs;
+  const eyeH = inp.eyeHeight / 1000;
+  const headH = inp.headOffset / 1000;
+  const stage = inp.stageHeight;
+
+  const rows = [];
+  let curX = inp.firstRowX;
+  let curFloorY = 0;
+
+  for (let i = 0; i < inp.numRows; i++) {
+    const ov = state.overrides[i] || {};
+    let spacing = 0, step = 0;
+    if (i > 0) {
+      spacing = (ov.spacing !== undefined) ? ov.spacing : inp.rowSpacing;
+      step = (ov.step !== undefined) ? ov.step / 1000 : inp.defaultStep / 1000;
+      curX += spacing;
+      curFloorY += step;
+    }
+    const eyeY = curFloorY + eyeH;
+    const headY = eyeY + headH;
+    const eyeY_rel = eyeY - stage;
+
+    rows.push({
+      index: i, x: curX, floorY: curFloorY, eyeY, headY, eyeY_rel,
+      stepFromPrev: step, spacingFromPrev: spacing,
+      stepFromPrev_mm: Math.round(step * 1000),
+      hasOverrideStep: ov.step !== undefined,
+      hasOverrideSpacing: ov.spacing !== undefined,
+      hasAisleBefore: i > 0 && spacing > inp.rowSpacing + 0.01,
+      aisleExtraWidth: i > 0 ? Math.max(0, spacing - inp.rowSpacing) : 0,
+    });
+  }
+
+  rows.forEach((r, i) => {
+    if (i === 0) {
+      r.C_imm = null; r.C_eff = null; r.C_primary = null; r.cClass = 'first';
+    } else {
+      const prev = rows[i - 1];
+      r.C_imm = (prev.x * r.eyeY_rel / r.x) - prev.eyeY_rel;
+      if (i >= 2) {
+        const prev2 = rows[i - 2];
+        r.C_eff = (prev2.x * r.eyeY_rel / r.x) - prev2.eyeY_rel;
+      } else { r.C_eff = r.C_imm; }
+      r.C_primary = inp.mode === 'staggered' ? r.C_eff : r.C_imm;
+      const C_mm = r.C_primary * 1000;
+      if (C_mm >= 120) r.cClass = 'green';
+      else if (C_mm >= 60) r.cClass = 'yellow';
+      else r.cClass = 'red';
+    }
+    if (i === 0) r.slopePct = 0;
+    else {
+      const prev = rows[i - 1];
+      const dx = r.x - prev.x;
+      r.slopePct = dx > 0 ? (r.stepFromPrev / dx) * 100 : 0;
+    }
+  });
+  return rows;
+}
+
+function computeStats(rows) {
+  const cs = rows.slice(1).map(r => r.C_primary * 1000);
+  const slopes = rows.slice(1).map(r => r.slopePct);
+  const lastFloorY = rows[rows.length - 1].floorY;
+  const totalRise = lastFloorY - rows[0].floorY;
+  const totalRun = rows[rows.length - 1].x - rows[0].x;
+  const avgSlope = totalRun > 0 ? (totalRise / totalRun) * 100 : 0;
+  const maxStep = Math.max(...rows.slice(1).map(r => r.stepFromPrev_mm));
+  return {
+    avgC: cs.length ? cs.reduce((a, b) => a + b, 0) / cs.length : 0,
+    minC: cs.length ? Math.min(...cs) : 0,
+    maxSlope: slopes.length ? Math.max(...slopes) : 0,
+    avgSlope, totalRise, totalRun, maxStep,
+  };
+}
+
+function computeWarnings(rows, stats) {
+  const w = [];
+  const inp = state.inputs;
+  rows.forEach((r, i) => {
+    if (i > 0 && r.stepFromPrev_mm > 200) {
+      w.push({ level: 'bad', msg: T('warn_riser', { N: i + 1, V: r.stepFromPrev_mm }) });
+    }
+  });
+  if (stats.maxSlope > 35) {
+    w.push({ level: 'bad', msg: T('warn_slope_unsafe', { V: stats.maxSlope.toFixed(1) }) });
+  } else if (stats.maxSlope > 8 && stats.maxSlope <= 35) {
+    w.push({ level: 'ok', msg: T('warn_slope_steps', { V: stats.maxSlope.toFixed(1) }) });
+  }
+  if (inp.rowSpacing < 0.85) {
+    w.push({ level: 'bad', msg: T('warn_spacing', { V: (inp.rowSpacing * 1000).toFixed(0) }) });
+  }
+  const badRows = rows.slice(1).filter(r => r.cClass === 'red');
+  if (badRows.length > 0) {
+    w.push({ level: 'bad', msg: T('warn_badrows', { N: badRows.length, R: badRows.map(r => r.index + 1).join(', ') }) });
+  }
+  return w;
+}
+
+// ============================================================
+//   SVG
+// ============================================================
+function renderSVG(rows) {
+  const svg = document.getElementById('viz');
+  const inp = state.inputs;
+
+  const VBW = 1200, VBH = 560;
+  const margin = { top: 60, right: 40, bottom: 60, left: 90 };
+  const innerW = VBW - margin.left - margin.right;
+  const innerH = VBH - margin.top - margin.bottom;
+
+  const xMin = -inp.stageDepth - 0.8;
+  const xMax = Math.max(rows[rows.length - 1].x + 1.2, inp.roomLength);
+  const yMin = -1.2;
+  const yMax = Math.max(inp.stageHeight + 0.6, rows[rows.length - 1].headY + 0.7);
+
+  const xs = (x) => margin.left + (x - xMin) / (xMax - xMin) * innerW;
+  const ys = (y) => margin.top + (1 - (y - yMin) / (yMax - yMin)) * innerH;
+
+  const parts = [];
+
+  for (let x = Math.ceil(xMin); x <= xMax; x++) {
+    parts.push(`<line class="svg-grid" x1="${xs(x)}" x2="${xs(x)}" y1="${margin.top}" y2="${margin.top + innerH}"/>`);
+    if (x % 2 === 0 || Math.abs(x) <= 4) {
+      parts.push(`<text class="svg-axislabel" x="${xs(x)}" y="${VBH - 32}" text-anchor="middle">${x}</text>`);
+    }
+  }
+  for (let y = Math.ceil(yMin); y <= Math.ceil(yMax); y++) {
+    parts.push(`<line class="svg-grid" x1="${margin.left}" x2="${margin.left + innerW}" y1="${ys(y)}" y2="${ys(y)}"/>`);
+    parts.push(`<text class="svg-axislabel" x="${margin.left - 8}" y="${ys(y) + 3}" text-anchor="end">${y}</text>`);
+  }
+
+  parts.push(`<line class="svg-axis" x1="${margin.left}" x2="${margin.left + innerW}" y1="${margin.top + innerH}" y2="${margin.top + innerH}"/>`);
+  parts.push(`<line class="svg-axis" x1="${margin.left}" x2="${margin.left}" y1="${margin.top}" y2="${margin.top + innerH}"/>`);
+  parts.push(`<text class="svg-axistitle" x="${margin.left + innerW / 2}" y="${VBH - 12}" text-anchor="middle">${T('axis_h')}</text>`);
+  parts.push(`<text class="svg-axistitle" x="${22}" y="${margin.top + innerH / 2}" text-anchor="middle" transform="rotate(-90 22 ${margin.top + innerH / 2})">${T('axis_v')}</text>`);
+
+  // Stage (-stageDepth → 0)
+  const stageX1 = xs(-inp.stageDepth);
+  const stageX2 = xs(0);
+  const stageY1 = ys(inp.stageHeight);
+  const stageY2 = ys(0);
+  parts.push(`<rect class="svg-stage" x="${stageX1}" y="${stageY1}" width="${stageX2 - stageX1}" height="${stageY2 - stageY1}"/>`);
+  for (let h = 0; h < 6; h++) {
+    const yh = stageY1 + (stageY2 - stageY1) * (h + 0.5) / 6;
+    parts.push(`<line class="svg-stage-hatch" x1="${stageX1 + 3}" y1="${yh}" x2="${stageX2 - 3}" y2="${yh}"/>`);
+  }
+
+  // Floor profile
+  let floorPath = `M ${xs(0)} ${ys(0)}`;
+  floorPath += ` L ${xs(rows[0].x - inp.rowSpacing / 2)} ${ys(rows[0].floorY)}`;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const nextR = rows[i + 1];
+    const rightEdge = nextR ? (r.x + (nextR.x - r.x) / 2) : (r.x + inp.rowSpacing / 2);
+    floorPath += ` L ${xs(rightEdge)} ${ys(r.floorY)}`;
+    if (nextR) floorPath += ` L ${xs(rightEdge)} ${ys(nextR.floorY)}`;
+  }
+  const lastRightEdge = rows[rows.length - 1].x + inp.rowSpacing / 2;
+  const closedFloorPath = floorPath + ` L ${xs(lastRightEdge)} ${ys(yMin)} L ${xs(0)} ${ys(yMin)} Z`;
+  parts.push(`<path class="svg-floor-fill" d="${closedFloorPath}"/>`);
+  parts.push(`<path class="svg-floor" d="${floorPath}"/>`);
+
+  // Aisle bands
+  rows.forEach((r, i) => {
+    if (r.hasAisleBefore) {
+      const prev = rows[i - 1];
+      const x1 = xs(prev.x + inp.rowSpacing / 2);
+      const x2 = xs(r.x - inp.rowSpacing / 2);
+      parts.push(`<rect class="svg-aisle" x="${x1}" y="${margin.top}" width="${x2 - x1}" height="${innerH}"/>`);
+      parts.push(`<text class="svg-aisle-label" x="${(x1 + x2) / 2}" y="${margin.top + 14}">${T('svg_aisle')}</text>`);
+    }
+  });
+
+  // Sight lines
+  const fpX = xs(0), fpY = ys(inp.stageHeight);
+  rows.forEach((r, i) => {
+    const hl = state.hl === i ? ' hl' : '';
+    parts.push(`<line class="svg-sight${hl}" x1="${fpX}" y1="${fpY}" x2="${xs(r.x)}" y2="${ys(r.eyeY)}"/>`);
+  });
+
+  // Spectators
+  rows.forEach((r, i) => {
+    const cx = xs(r.x);
+    const yf = ys(r.floorY);
+    const ye = ys(r.eyeY);
+    const yh = ys(r.headY);
+    parts.push(`<line class="svg-body" x1="${cx}" y1="${yf}" x2="${cx}" y2="${ye}"/>`);
+    parts.push(`<circle class="svg-eye" cx="${cx}" cy="${ye}" r="3.5"/>`);
+    parts.push(`<circle class="svg-head ${r.cClass}" cx="${cx}" cy="${yh}" r="6.5" data-row="${i}"/>`);
+    parts.push(`<text class="svg-rowlabel" x="${cx}" y="${yf + 14}">F${i + 1}</text>`);
+  });
+
+  // Dimension X1 (horizontal)
+  const dimYa = margin.top - 22;
+  parts.push(`<line class="svg-dim" x1="${xs(0)}" y1="${dimYa}" x2="${xs(rows[0].x)}" y2="${dimYa}"/>`);
+  parts.push(`<line class="svg-dim-tick" x1="${xs(0)}" y1="${dimYa - 5}" x2="${xs(0)}" y2="${dimYa + 5}"/>`);
+  parts.push(`<line class="svg-dim-tick" x1="${xs(rows[0].x)}" y1="${dimYa - 5}" x2="${xs(rows[0].x)}" y2="${dimYa + 5}"/>`);
+  const midDimX = (xs(0) + xs(rows[0].x)) / 2;
+  const labelTxt = `X₁ = ${rows[0].x.toFixed(2)} m`;
+  const labelW = labelTxt.length * 6.2 + 10;
+  parts.push(`<rect class="svg-dim-text-bg" x="${midDimX - labelW/2}" y="${dimYa - 11}" width="${labelW}" height="14"/>`);
+  parts.push(`<text class="svg-dim-text" x="${midDimX}" y="${dimYa}" text-anchor="middle" dominant-baseline="middle">${labelTxt}</text>`);
+
+  // Dimension H (vertical, stage height)
+  const dimXa = xs(0) + 18;
+  parts.push(`<line class="svg-dim" x1="${dimXa}" y1="${ys(0)}" x2="${dimXa}" y2="${ys(inp.stageHeight)}"/>`);
+  parts.push(`<line class="svg-dim-tick" x1="${dimXa - 5}" y1="${ys(0)}" x2="${dimXa + 5}" y2="${ys(0)}"/>`);
+  parts.push(`<line class="svg-dim-tick" x1="${dimXa - 5}" y1="${ys(inp.stageHeight)}" x2="${dimXa + 5}" y2="${ys(inp.stageHeight)}"/>`);
+  const midDimY = (ys(0) + ys(inp.stageHeight)) / 2;
+  const hLabel = `H = ${inp.stageHeight.toFixed(2)} m`;
+  const hLabelW = hLabel.length * 6.2 + 10;
+  parts.push(`<rect class="svg-dim-text-bg" x="${dimXa - hLabelW/2 + 24}" y="${midDimY - 7}" width="${hLabelW}" height="14"/>`);
+  parts.push(`<text class="svg-dim-text" x="${dimXa + 24}" y="${midDimY}" text-anchor="start" dominant-baseline="middle">${hLabel}</text>`);
+
+  // Focal star
+  parts.push(`<path class="svg-star" d="${starPath(fpX, fpY, 10, 4.5)}"/>`);
+  parts.push(`<text class="svg-dim-text" x="${fpX + 14}" y="${fpY - 12}" style="fill:var(--sss-red)">${T('label_focal')}</text>`);
+
+  svg.innerHTML = parts.join('\n');
+
+  svg.querySelectorAll('.svg-head').forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      state.hl = parseInt(el.getAttribute('data-row'));
+      render();
+    });
+    el.addEventListener('mouseleave', () => {
+      state.hl = null;
+      render();
+    });
+  });
+}
+
+function starPath(cx, cy, R, r) {
+  let d = '';
+  for (let i = 0; i < 10; i++) {
+    const radius = i % 2 === 0 ? R : r;
+    const angle = (Math.PI / 5) * i - Math.PI / 2;
+    const x = cx + radius * Math.cos(angle);
+    const y = cy + radius * Math.sin(angle);
+    d += (i === 0 ? 'M ' : 'L ') + x.toFixed(2) + ' ' + y.toFixed(2) + ' ';
+  }
+  return d + 'Z';
+}
+
+// ============================================================
+//   SUMMARY
+// ============================================================
+function renderSummary(rows, stats) {
+  const el = document.getElementById('summary');
+  let minCStatClass = '';
+  if (stats.minC >= 120) minCStatClass = 'good';
+  else if (stats.minC >= 60) minCStatClass = 'warn';
+  else minCStatClass = 'alert';
+  const slopeAlert = stats.maxSlope > 35 || stats.maxStep > 200;
+  el.innerHTML = `
+    <div class="stat">
+      <div class="label">${T('stat_avgC')}</div>
+      <div class="val">${stats.avgC.toFixed(0)}<span class="unit">mm</span></div>
+    </div>
+    <div class="stat ${minCStatClass}">
+      <div class="label">${T('stat_minC')}</div>
+      <div class="val">${stats.minC.toFixed(0)}<span class="unit">mm</span></div>
+    </div>
+    <div class="stat ${slopeAlert ? 'alert' : ''}">
+      <div class="label">${T('stat_maxSlope')}</div>
+      <div class="val">${stats.maxSlope.toFixed(1)}<span class="unit">%</span></div>
+    </div>
+    <div class="stat">
+      <div class="label">${T('stat_totalRise')}</div>
+      <div class="val">${stats.totalRise.toFixed(2)}<span class="unit">m</span></div>
+    </div>
+  `;
+}
+
+function renderWarnings(warnings) {
+  const el = document.getElementById('warnings');
+  if (warnings.length === 0) { el.innerHTML = ''; return; }
+  el.innerHTML = warnings.map(w =>
+    `<div class="warn ${w.level === 'ok' ? 'ok' : ''}">${w.msg}</div>`
+  ).join('');
+}
+
+// ============================================================
+//   TABLE
+// ============================================================
+function renderTable(rows) {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = rows.map((r, i) => {
+    const hasOv = r.hasOverrideStep || r.hasOverrideSpacing;
+    const cPill = (r.C_primary === null)
+      ? '<span class="c-pill muted">—</span>'
+      : `<span class="c-pill ${r.cClass}">${(r.C_primary * 1000).toFixed(0)} mm</span>`;
+    const tags = [];
+    if (r.hasAisleBefore) tags.push(`<span class="tag aisle">${T('tag_aisle')}</span>`);
+    if (i > 0 && r.cClass === 'red') tags.push(`<span class="tag">${T('tag_critical')}</span>`);
+    const hl = state.hl === i ? 'hl' : '';
+    return `
+      <tr class="${hl}" data-row="${i}">
+        <td><b style="color:var(--bright)">F${i + 1}</b></td>
+        <td>${i === 0
+          ? '<span style="color:var(--dim);">—</span>'
+          : `<input type="number" class="cell ${r.hasOverrideSpacing ? 'mod' : ''}" step="0.05" min="0.5" value="${r.spacingFromPrev.toFixed(2)}" data-row="${i}" data-field="spacing">`}</td>
+        <td>${i === 0
+          ? '<span style="color:var(--dim);">—</span>'
+          : `<input type="number" class="cell ${r.hasOverrideStep ? 'mod' : ''}" step="5" min="0" value="${r.stepFromPrev_mm}" data-row="${i}" data-field="step">`}</td>
+        <td class="num">${r.x.toFixed(2)}</td>
+        <td class="num">${r.floorY.toFixed(3)}</td>
+        <td class="num">${r.eyeY.toFixed(3)}</td>
+        <td class="num">${i === 0 ? '—' : r.slopePct.toFixed(1) + '%'}</td>
+        <td>${cPill}</td>
+        <td>${tags.join(' ')}</td>
+        <td>${i > 0 ? `<button class="btn-reset" data-row="${i}" ${hasOv ? '' : 'disabled'}>${T('btn_reset_row')}</button>` : ''}</td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('input.cell').forEach(inp => {
+    inp.addEventListener('change', onCellChange);
+    inp.addEventListener('input', onCellChange);
+  });
+  tbody.querySelectorAll('button.btn-reset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.getAttribute('data-row'));
+      delete state.overrides[i];
+      render();
+    });
+  });
+  tbody.querySelectorAll('tr').forEach(tr => {
+    const i = parseInt(tr.getAttribute('data-row'));
+    tr.addEventListener('mouseenter', () => { state.hl = i; render(); });
+    tr.addEventListener('mouseleave', () => { state.hl = null; render(); });
+  });
+}
+
+function onCellChange(e) {
+  const i = parseInt(e.target.getAttribute('data-row'));
+  const field = e.target.getAttribute('data-field');
+  const val = parseFloat(e.target.value);
+  if (isNaN(val)) return;
+  if (!state.overrides[i]) state.overrides[i] = {};
+  state.overrides[i][field] = val;
+  render();
+}
+
+// ============================================================
+//   RENDER
+// ============================================================
+function render() {
+  const rows = compute();
+  const stats = computeStats(rows);
+  const warnings = computeWarnings(rows, stats);
+  renderSummary(rows, stats);
+  renderWarnings(warnings);
+  renderSVG(rows);
+  renderTable(rows);
+}
+
+// ============================================================
+//   BINDINGS
+// ============================================================
+function bindInputs() {
+  const bind = (id, key, asInt = false) => {
+    const el = document.getElementById(id);
+    const handler = () => {
+      const v = asInt ? parseInt(el.value) : parseFloat(el.value);
+      if (!isNaN(v)) {
+        state.inputs[key] = v;
+        if (key === 'numRows') {
+          Object.keys(state.overrides).forEach(k => {
+            if (parseInt(k) >= v) delete state.overrides[k];
+          });
+        }
+        render();
+      }
+    };
+    el.addEventListener('change', handler);
+    el.addEventListener('input', handler);
+  };
+  bind('in-roomLength', 'roomLength');
+  bind('in-firstRowX', 'firstRowX');
+  bind('in-stageHeight', 'stageHeight');
+  bind('in-stageDepth', 'stageDepth');
+  bind('in-numRows', 'numRows', true);
+  bind('in-rowSpacing', 'rowSpacing');
+  bind('in-defaultStep', 'defaultStep');
+  bind('in-eyeHeight', 'eyeHeight');
+  bind('in-headOffset', 'headOffset');
+
+  document.getElementById('in-focalType').addEventListener('change', (e) => {
+    state.inputs.focalType = e.target.value;
+    render();
+  });
+
+  document.querySelectorAll('#seg-mode button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#seg-mode button').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      state.inputs.mode = b.getAttribute('data-value');
+      render();
+    });
+  });
+
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    state.overrides = {};
+    render();
+  });
+
+  document.getElementById('btn-add-aisle').addEventListener('click', () => {
+    const mid = Math.floor(state.inputs.numRows / 2);
+    const idxStr = prompt(T('prompt_aisleRow', { N: state.inputs.numRows }), mid + 1);
+    if (!idxStr) return;
+    const idx = parseInt(idxStr) - 1;
+    if (isNaN(idx) || idx < 1 || idx >= state.inputs.numRows) {
+      alert(T('prompt_invalidRow'));
+      return;
+    }
+    const widthStr = prompt(T('prompt_aisleWidth'), '1.5');
+    if (!widthStr) return;
+    const width = parseFloat(widthStr);
+    if (isNaN(width) || width < 0.5) {
+      alert(T('prompt_invalidWidth'));
+      return;
+    }
+    if (!state.overrides[idx]) state.overrides[idx] = {};
+    state.overrides[idx].spacing = state.inputs.rowSpacing + width;
+    render();
+  });
+
+  // Language toggle
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.addEventListener('click', () => {
+      state.lang = b.getAttribute('data-lang');
+      applyLanguage();
+    });
+  });
+}
+
+bindInputs();
+applyLanguage();
+
+</script>
+</body>
+</html>
