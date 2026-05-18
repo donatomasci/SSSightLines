@@ -379,6 +379,17 @@
   .svg-axistitle { font-family: var(--mono); font-size: 10px; fill: var(--dim); letter-spacing: 1px; text-transform: uppercase; }
   .svg-stage { fill: var(--surf3); stroke: var(--bright); stroke-width: 1.2; }
   .svg-stage-hatch { stroke: var(--dim); stroke-width: 0.5; opacity: 0.4; }
+  .svg-screen { fill: #2a2a3a; stroke: var(--bright); stroke-width: 1.5; }
+  .svg-critical { stroke-width: 1.5; stroke-dasharray: 5 3; fill: none; }
+  .svg-critical.critical-ok { stroke: var(--good); opacity: 0.7; }
+  .svg-critical.critical-warn { stroke: var(--ok); opacity: 0.9; }
+  .svg-critical.critical-bad { stroke: var(--bad); opacity: 0.95; }
+  .svg-critical-label { font-family: var(--mono); font-size: 10px; font-weight: 600; }
+  .svg-critical-label.critical-ok { fill: var(--good); }
+  .svg-critical-label.critical-warn { fill: var(--ok); }
+  .svg-critical-label.critical-bad { fill: var(--bad); }
+  .svg-blind-warn { fill: var(--ok); opacity: 0.22; }
+  .svg-blind-bad { fill: var(--bad); opacity: 0.28; }
   .svg-floor { fill: none; stroke: var(--bright); stroke-width: 1.8; stroke-linejoin: miter; }
   .svg-floor-fill { fill: var(--surf2); opacity: 0.6; }
   .svg-sight { stroke: var(--accent); stroke-width: 0.8; stroke-dasharray: 3 3; opacity: 0.35; }
@@ -449,11 +460,28 @@
   }
   td input.cell:focus { border-color: var(--accent); }
   td input.cell.mod {
-    background: rgba(212, 32, 44, 0.1);
-    color: var(--sss-red);
-    border-color: var(--sss-red);
+    background: rgba(56, 189, 248, 0.08);
+    color: var(--accent-2);
+    border-color: var(--accent-2);
     font-weight: 600;
   }
+  td input.cell.delta-ok {
+    box-shadow: inset 0 0 0 1px var(--good);
+  }
+  td input.cell.delta-mark {
+    box-shadow: inset 0 0 0 1px var(--ok);
+    background: var(--ok-bg);
+  }
+  td input.cell.delta-bad {
+    box-shadow: inset 0 0 0 1.5px var(--bad);
+    background: var(--bad-bg);
+  }
+  /* When both mod and delta-bad: delta-bad wins for background, but keep cyan text */
+  td input.cell.mod.delta-mark { background: var(--ok-bg); }
+  td input.cell.mod.delta-bad { background: var(--bad-bg); }
+
+  .tag.delta-mark { background: var(--ok-bg); color: var(--ok); border-color: rgba(251,191,36,0.4); }
+  .tag.delta-bad { background: var(--bad-bg); color: var(--bad); border-color: rgba(248,113,113,0.5); }
 
   .c-pill {
     display: inline-block;
@@ -469,6 +497,28 @@
   .c-pill.yellow { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
   .c-pill.red { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
   .c-pill.muted { background: var(--surf2); color: var(--dim); border-color: var(--border); }
+  .c-pill.view-ok { background: var(--good-bg); color: var(--good); border-color: var(--good); }
+  .c-pill.view-warn { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
+  .c-pill.view-bad { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
+
+  .step-cell {
+    white-space: nowrap;
+  }
+  .delta-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 2px 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 2px;
+    border: 1px solid;
+    letter-spacing: 0.2px;
+    vertical-align: middle;
+  }
+  .delta-badge.ok { background: var(--good-bg); color: var(--good); border-color: var(--good); opacity: 0.7; }
+  .delta-badge.mark { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
+  .delta-badge.bad { background: var(--bad-bg); color: var(--bad); border-color: var(--bad); }
 
   .tag {
     display: inline-block;
@@ -690,6 +740,11 @@
           </select>
         </div>
       </div>
+
+      <div class="field" id="field-screenHeight" style="display:none;">
+        <label><span data-i18n="lab_screenHeight">Altezza schermo</span><span class="unit">m</span></label>
+        <input type="number" id="in-screenHeight" value="4.0" step="0.1" min="0.5" max="20">
+      </div>
     </div>
 
     <div class="card">
@@ -790,6 +845,7 @@
           <th class="num" data-i18n="th_yeye">Y occhio (m)</th>
           <th class="num" data-i18n="th_slope">Pendenza</th>
           <th data-i18n="th_c">Valore C</th>
+          <th id="th-view" data-i18n="th_blind">Zona morta</th>
           <th data-i18n="th_notes">Note</th>
           <th></th>
         </tr>
@@ -867,6 +923,28 @@
       </ul>
     </div>
 
+    <div class="guide">
+      <div class="step-no" data-i18n="g7_no">07 · Conformità</div>
+      <h4 data-i18n="g7_h">Alzata progressiva e codice IBC</h4>
+      <p data-i18n-html="g7_p1">La curva isocidona "perfetta" richiede <b>alzata crescente fila per fila</b>: è la geometria di teatri come la Walt Disney Concert Hall di Los Angeles, la Berlin Philharmonie, l'Elbphilharmonie. <b>Non è un'eccezione bizzarra ma la prassi corretta</b> per garantire C uniforme.</p>
+      <p data-i18n-html="g7_p2">L'IBC §1030.14.2.2 (e analoghi europei) ammette esplicitamente alzate non uniformi nelle scalette di platea <b>"nella misura necessaria a seguire il gradiente delle sedute per mantenere adeguate linee di vista"</b>. I limiti:</p>
+      <ul data-i18n-html="g7_list">
+        <li><b>Δ ≤ 9.5 mm</b> tra alzate adiacenti: ammesso senza marcature speciali.</li>
+        <li><b>9.5 &lt; Δ ≤ 19 mm</b>: ammesso solo con <b>striscia contrastante</b> sul naso del gradino, ben visibile in discesa.</li>
+        <li><b>Δ > 19 mm</b>: <b>non ammesso</b>. Inserire un corridoio trasversale o un pianerottolo che spezzi il flight.</li>
+      </ul>
+      <p data-i18n-html="g7_p3">Il tool segnala automaticamente i Δ in tabella con tre colori (verde/giallo/rosso) e i warning corrispondenti. <b>Strategia pratica:</b> dimensionare alzate progressive a piccoli scatti (es. 120 → 125 → 130 mm), e dove il C richiede un salto maggiore, inserire un corridoio trasversale che fa da pianerottolo e azzera il vincolo di uniformità tra le file separate.</p>
+    </div>
+
+    <div class="guide">
+      <div class="step-no" data-i18n="g8_no">08 · Prima fila</div>
+      <h4 data-i18n="g8_h">Visibilità del fondo palco e angolo schermo</h4>
+      <p data-i18n-html="g8_p1">Se l'occhio della prima fila è <b>più basso</b> del bordo del proscenio (caso tipico: palco lirico alto), il proscenio stesso copre parte del fondo palco. La "zona morta" sul pavimento del palco a profondità D si calcola come:</p>
+      <div class="formula" data-i18n="g8_p2">h_morta = (D / X₁) · (H − occhio_prima_fila)</div>
+      <p data-i18n-html="g8_p3">Se positiva, è l'altezza minima visibile sul pavimento del palco a quella profondità. Soglie pratiche: <b>> 300 mm</b> = perdita dei piedi degli attori al fondo (warning); <b>> 1000 mm</b> = visibili solo busti (critico). Soluzioni: alzare la prima fila (alzata negativa rispetto a Y=0), ridurre profondità utile del palco, o allontanare la prima fila.</p>
+      <p data-i18n-html="g8_p4">In modalità <b>schermo</b> il vincolo è diverso: l'angolo verticale dall'occhio della prima fila al bordo superiore dello schermo non deve superare <b>35°</b> (raccomandazione THX). Oltre, lo spettatore deve inclinare la testa per leggere i sottotitoli o seguire l'azione in alto: affaticamento e mal di collo certi. Limite assoluto: 45°.</p>
+    </div>
+
   </div>
 
   <footer>
@@ -936,6 +1014,14 @@ const I18N = {
     th_slope: 'Pendenza',
     th_c: 'Valore C',
     th_notes: 'Note',
+    th_blind: 'Zona morta',
+    th_screen_angle: '∠ schermo',
+
+    tip_delta_ok: 'Δ alzata = {V} mm — conforme IBC (≤ 9.5 mm).',
+    tip_delta_mark: 'Δ alzata = {V} mm — ammesso IBC ma richiede striscia di marcatura visiva sul naso del gradino.',
+    tip_delta_bad: 'Δ alzata = {V} mm — NON conforme IBC (> 19 mm). Inserire un corridoio o ridurre il salto.',
+    tip_delta_firstpair: 'Prima alzata della platea: nessun vincolo di uniformità con file precedenti.',
+    tip_delta_aisle: 'Prima fila dopo un corridoio: il corridoio resetta il flight, nessun vincolo di uniformità con la fila precedente.',
 
     tag_aisle: 'corridoio',
     tag_critical: 'critica',
@@ -982,11 +1068,34 @@ const I18N = {
     warn_slope_steps: 'Pendenza <b>{V}%</b> > 8%: gradini obbligatori nei corridoi laterali.',
     warn_spacing: 'Interfila <b>{V} mm</b> < 850 mm minimo normativo.',
     warn_badrows: '{N} fila/e con C insufficiente (&lt; 60 mm): file <b>{R}</b>.',
+    warn_riser_delta_bad: '<b>{N} fila/e</b> con Δ alzata > 19 mm rispetto alla precedente (file <b>{R}</b>, Δ = <b>{V}</b> mm): non conforme IBC 1030.14.2.2, inserire un corridoio o ridurre il salto.',
+    warn_riser_delta_mark: '<b>{N} fila/e</b> con Δ alzata > 9.5 mm (file <b>{R}</b>): IBC ammette ma richiede marcatura visiva del gradino (striscia contrastante sul naso del gradino).',
+    warn_back_blocked_warn: 'Prima fila: zona morta sul palco a {D} m di profondità — non visibili i primi <b>{V} mm</b> dal pavimento del palco. Gli attori distesi/seduti a fondo palco non si vedono.',
+    warn_back_blocked_bad: 'Prima fila: zona morta sul palco a {D} m di profondità di <b>{V} mm</b> dal pavimento. Visibili solo busti/teste a fondo palco. Alzare la prima fila o ridurre profondità utile.',
+    warn_screen_angle_warn: 'Prima fila: angolo verticale al top schermo <b>{A}°</b> > 35° (limite THX). Schermo troppo alto o prima fila troppo vicina.',
+    warn_screen_angle_bad: 'Prima fila: angolo verticale al top schermo <b>{A}°</b> > 45°. Posizionamento non accettabile, allontanare la prima fila.',
 
     prompt_aisleRow: 'Inserisci un corridoio PRIMA della fila numero (2–{N}):',
     prompt_invalidRow: 'Fila non valida.',
     prompt_aisleWidth: 'Larghezza del corridoio (m):',
     prompt_invalidWidth: 'Larghezza non valida (minimo 0.5 m).',
+
+    lab_screenHeight: 'Altezza schermo',
+    blind_zone: 'zona morta',
+
+    g7_no: '07 · Conformità',
+    g7_h: 'Alzata progressiva e codice IBC',
+    g7_p1: 'La curva isocidona "perfetta" richiede <b>alzata crescente fila per fila</b>: è la geometria di teatri come la Walt Disney Concert Hall di Los Angeles, la Berlin Philharmonie, l\'Elbphilharmonie. <b>Non è un\'eccezione bizzarra ma la prassi corretta</b> per garantire C uniforme.',
+    g7_p2: 'L\'IBC §1030.14.2.2 (e analoghi europei) ammette esplicitamente alzate non uniformi nelle scalette di platea <b>"nella misura necessaria a seguire il gradiente delle sedute per mantenere adeguate linee di vista"</b>. I limiti:',
+    g7_list: '<li><b>Δ ≤ 9.5 mm</b> tra alzate adiacenti: ammesso senza marcature speciali.</li><li><b>9.5 &lt; Δ ≤ 19 mm</b>: ammesso solo con <b>striscia contrastante</b> sul naso del gradino, ben visibile in discesa.</li><li><b>Δ > 19 mm</b>: <b>non ammesso</b>. Inserire un corridoio trasversale o un pianerottolo che spezzi il flight.</li>',
+    g7_p3: 'Il tool segnala automaticamente i Δ in tabella con tre colori (verde/giallo/rosso) e i warning corrispondenti. <b>Strategia pratica:</b> dimensionare alzate progressive a piccoli scatti (es. 120 → 125 → 130 mm), e dove il C richiede un salto maggiore, inserire un corridoio trasversale che fa da pianerottolo e azzera il vincolo di uniformità tra le file separate.',
+
+    g8_no: '08 · Prima fila',
+    g8_h: 'Visibilità del fondo palco e angolo schermo',
+    g8_p1: 'Se l\'occhio della prima fila è <b>più basso</b> del bordo del proscenio (caso tipico: palco lirico alto), il proscenio stesso copre parte del fondo palco. La "zona morta" sul pavimento del palco a profondità D si calcola come:',
+    g8_p2: 'h_morta = (D / X₁) · (H − occhio_prima_fila)',
+    g8_p3: 'Se positiva, è l\'altezza minima visibile sul pavimento del palco a quella profondità. Soglie pratiche: <b>> 300 mm</b> = perdita dei piedi degli attori al fondo (warning); <b>> 1000 mm</b> = visibili solo busti (critico). Soluzioni: alzare la prima fila (alzata negativa rispetto a Y=0), ridurre profondità utile del palco, o allontanare la prima fila.',
+    g8_p4: 'In modalità <b>schermo</b> il vincolo è diverso: l\'angolo verticale dall\'occhio della prima fila al bordo superiore dello schermo non deve superare <b>35°</b> (raccomandazione THX). Oltre, lo spettatore deve inclinare la testa per leggere i sottotitoli o seguire l\'azione in alto: affaticamento e mal di collo certi. Limite assoluto: 45°.',
   },
 
   en: {
@@ -1042,6 +1151,14 @@ const I18N = {
     th_slope: 'Slope',
     th_c: 'C value',
     th_notes: 'Notes',
+    th_blind: 'Blind zone',
+    th_screen_angle: '∠ screen',
+
+    tip_delta_ok: 'Riser Δ = {V} mm — IBC compliant (≤ 9.5 mm).',
+    tip_delta_mark: 'Riser Δ = {V} mm — IBC allows it but requires a contrasting marking stripe on the nosing.',
+    tip_delta_bad: 'Riser Δ = {V} mm — NOT IBC compliant (> 19 mm). Insert a cross aisle or reduce the jump.',
+    tip_delta_firstpair: 'First seating riser: no uniformity constraint with the previous rows.',
+    tip_delta_aisle: 'First row after a cross aisle: the aisle resets the flight, no uniformity constraint vs previous row.',
 
     tag_aisle: 'aisle',
     tag_critical: 'critical',
@@ -1088,11 +1205,34 @@ const I18N = {
     warn_slope_steps: 'Slope <b>{V}%</b> > 8%: steps mandatory in side aisles.',
     warn_spacing: 'Row spacing <b>{V} mm</b> < 850 mm regulatory minimum.',
     warn_badrows: '{N} row(s) with insufficient C (&lt; 60 mm): rows <b>{R}</b>.',
+    warn_riser_delta_bad: '<b>{N} row(s)</b> with riser Δ > 19 mm vs previous (rows <b>{R}</b>, Δ = <b>{V}</b> mm): not IBC 1030.14.2.2 compliant; insert a cross aisle or reduce the jump.',
+    warn_riser_delta_mark: '<b>{N} row(s)</b> with riser Δ > 9.5 mm (rows <b>{R}</b>): IBC allows it but requires <b>visible step marking</b> (contrasting stripe on tread nosing).',
+    warn_back_blocked_warn: 'First row: blind zone at {D} m stage depth — first <b>{V} mm</b> above stage floor not visible. Actors lying/sitting upstage are hidden.',
+    warn_back_blocked_bad: 'First row: blind zone at {D} m stage depth of <b>{V} mm</b> above stage floor. Only torsos/heads visible upstage. Raise first row or reduce useful stage depth.',
+    warn_screen_angle_warn: 'First row: vertical angle to screen top <b>{A}°</b> > 35° (THX limit). Screen too high or first row too close.',
+    warn_screen_angle_bad: 'First row: vertical angle to screen top <b>{A}°</b> > 45°. Unacceptable positioning, move first row back.',
 
     prompt_aisleRow: 'Insert an aisle BEFORE row number (2–{N}):',
     prompt_invalidRow: 'Invalid row.',
     prompt_aisleWidth: 'Aisle width (m):',
     prompt_invalidWidth: 'Invalid width (min 0.5 m).',
+
+    lab_screenHeight: 'Screen height',
+    blind_zone: 'blind zone',
+
+    g7_no: '07 · Compliance',
+    g7_h: 'Progressive risers and IBC code',
+    g7_p1: 'The "perfect" isacoustic curve requires <b>risers growing row by row</b>: this is the geometry of halls like Walt Disney Concert Hall in Los Angeles, Berlin Philharmonie, Elbphilharmonie. <b>It is not a bizarre exception but the correct practice</b> to guarantee uniform C.',
+    g7_p2: 'IBC §1030.14.2.2 (and European equivalents) explicitly allows non-uniform risers in stepped aisles <b>"to the extent necessitated by changes in the gradient of the adjoining seating area to maintain adequate sightlines"</b>. The limits:',
+    g7_list: '<li><b>Δ ≤ 9.5 mm</b> between adjacent risers: allowed with no special marking.</li><li><b>9.5 &lt; Δ ≤ 19 mm</b>: allowed only with <b>contrasting stripe</b> on the nosing, visible in descent.</li><li><b>Δ > 19 mm</b>: <b>not allowed</b>. Insert a cross aisle or landing to break the flight.</li>',
+    g7_p3: 'The tool flags Δ in the table with three colors (green/yellow/red) and shows the relevant warnings. <b>Practical strategy:</b> grow risers in small increments (e.g., 120 → 125 → 130 mm), and where C demands a larger jump, insert a cross aisle that acts as a landing and resets the uniformity constraint between the separated rows.',
+
+    g8_no: '08 · First row',
+    g8_h: 'Back-stage visibility and screen angle',
+    g8_p1: 'If the first row eye is <b>lower</b> than the proscenium edge (typical case: high opera stage), the proscenium itself blocks part of the back stage. The "blind zone" on the stage floor at depth D is:',
+    g8_p2: 'h_blind = (D / X₁) · (H − first_row_eye)',
+    g8_p3: 'If positive, it is the minimum visible height on the stage floor at that depth. Practical thresholds: <b>> 300 mm</b> = actors\' feet hidden upstage (warning); <b>> 1000 mm</b> = only torsos visible (critical). Solutions: raise the first row (negative Y offset), reduce useful stage depth, or move the first row back.',
+    g8_p4: 'In <b>screen</b> mode the constraint is different: the vertical angle from the first-row eye to the top of the screen should not exceed <b>35°</b> (THX recommendation). Beyond this, the viewer must tilt the head back to read subtitles or follow the action: guaranteed neck strain. Absolute limit: 45°.',
   }
 };
 
@@ -1134,6 +1274,7 @@ const state = {
     stageHeight: 1.07,
     stageDepth: 3.0,
     focalType: 'stage',
+    screenHeight: 4.0,
     numRows: 10,
     rowSpacing: 0.9,
     defaultStep: 120,
@@ -1204,7 +1345,76 @@ function compute() {
       const dx = r.x - prev.x;
       r.slopePct = dx > 0 ? (r.stepFromPrev / dx) * 100 : 0;
     }
+
+    // IBC delta riser compliance check (between adjacent rows)
+    if (i === 0 || i === 1) {
+      r.riserDelta_mm = null;
+      r.riserDeltaClass = null;
+    } else if (r.hasAisleBefore) {
+      // Cross aisle resets the flight — no constraint across it
+      r.riserDelta_mm = null;
+      r.riserDeltaClass = null;
+    } else {
+      const prev = rows[i - 1];
+      r.riserDelta_mm = Math.abs(r.stepFromPrev_mm - prev.stepFromPrev_mm);
+      if (r.riserDelta_mm > 19) r.riserDeltaClass = 'bad';
+      else if (r.riserDelta_mm > 9.5) r.riserDeltaClass = 'mark';
+      else r.riserDeltaClass = 'ok';
+    }
   });
+
+  // First-row visibility check (worst case) + per-row visibility values
+  const inp_H = inp.stageHeight;
+  const inp_X1 = inp.firstRowX;
+  rows.forEach((r, i) => {
+    // Per-row view diagnostic
+    if (inp.focalType === 'screen') {
+      const screenTop = inp_H + inp.screenHeight;
+      const screenBottom = inp_H;
+      r.screenAngleTopDeg = Math.atan((screenTop - r.eyeY) / r.x) * 180 / Math.PI;
+      r.screenAngleBottomDeg = Math.atan((screenBottom - r.eyeY) / r.x) * 180 / Math.PI;
+      const a = r.screenAngleTopDeg;
+      if (a > 45) r.viewClass = 'bad';
+      else if (a > 35) r.viewClass = 'warn';
+      else r.viewClass = 'ok';
+      r.blindHeight = null;
+    } else {
+      // Stage / floor: blind zone at depth D for this row
+      const D = inp.stageDepth;
+      const blind = Math.max(0, (D / r.x) * (inp_H - r.eyeY));
+      r.blindHeight = blind;
+      if (blind > 1.0) r.viewClass = 'bad';
+      else if (blind > 0.3) r.viewClass = 'warn';
+      else r.viewClass = 'ok';
+      r.screenAngleTopDeg = null;
+    }
+  });
+
+  // Global firstRowDiag (for SVG rendering & global warning)
+  const firstRow = rows[0];
+  if (inp.focalType === 'screen') {
+    const screenTop = inp_H + inp.screenHeight;
+    const screenBottom = inp_H;
+    rows.firstRowDiag = {
+      type: 'screen',
+      angleTopDeg: firstRow.screenAngleTopDeg,
+      angleBottomDeg: firstRow.screenAngleBottomDeg,
+      screenTop, screenBottom,
+      cls: firstRow.viewClass,
+    };
+  } else {
+    const D = inp.stageDepth;
+    const blindHeight = firstRow.blindHeight;
+    rows.firstRowDiag = {
+      type: 'stage',
+      blindHeight,
+      depth: D,
+      backStageX: -D,
+      backStageY: inp_H,
+      minVisibleY: inp_H + blindHeight,
+      cls: firstRow.viewClass,
+    };
+  }
   return rows;
 }
 
@@ -1232,6 +1442,49 @@ function computeWarnings(rows, stats) {
       w.push({ level: 'bad', msg: T('warn_riser', { N: i + 1, V: r.stepFromPrev_mm }) });
     }
   });
+
+  // IBC delta riser warnings
+  const badDelta = rows.filter(r => r.riserDeltaClass === 'bad');
+  const markDelta = rows.filter(r => r.riserDeltaClass === 'mark');
+  if (badDelta.length > 0) {
+    w.push({
+      level: 'bad',
+      msg: T('warn_riser_delta_bad', {
+        N: badDelta.length,
+        R: badDelta.map(r => r.index + 1).join(', '),
+        V: badDelta.map(r => r.riserDelta_mm.toFixed(1)).join(', '),
+      })
+    });
+  }
+  if (markDelta.length > 0) {
+    w.push({
+      level: 'ok',
+      msg: T('warn_riser_delta_mark', {
+        N: markDelta.length,
+        R: markDelta.map(r => r.index + 1).join(', '),
+      })
+    });
+  }
+
+  // First-row visibility warnings
+  const fd = rows.firstRowDiag;
+  if (fd && fd.type === 'stage' && fd.cls !== 'ok') {
+    const lvl = fd.cls === 'bad' ? 'bad' : 'ok';
+    const key = fd.cls === 'bad' ? 'warn_back_blocked_bad' : 'warn_back_blocked_warn';
+    w.push({
+      level: lvl,
+      msg: T(key, { D: fd.depth.toFixed(1), V: (fd.blindHeight * 1000).toFixed(0) })
+    });
+  }
+  if (fd && fd.type === 'screen' && fd.cls !== 'ok') {
+    const lvl = fd.cls === 'bad' ? 'bad' : 'ok';
+    const key = fd.cls === 'bad' ? 'warn_screen_angle_bad' : 'warn_screen_angle_warn';
+    w.push({
+      level: lvl,
+      msg: T(key, { A: fd.angleTopDeg.toFixed(1) })
+    });
+  }
+
   if (stats.maxSlope > 35) {
     w.push({ level: 'bad', msg: T('warn_slope_unsafe', { V: stats.maxSlope.toFixed(1) }) });
   } else if (stats.maxSlope > 8 && stats.maxSlope <= 35) {
@@ -1262,7 +1515,10 @@ function renderSVG(rows) {
   const xMin = -inp.stageDepth - 0.8;
   const xMax = Math.max(rows[rows.length - 1].x + 1.2, inp.roomLength);
   const yMin = -1.2;
-  const yMax = Math.max(inp.stageHeight + 0.6, rows[rows.length - 1].headY + 0.7);
+  const yMaxStage = inp.focalType === 'screen'
+    ? inp.stageHeight + inp.screenHeight + 0.6
+    : inp.stageHeight + 0.6;
+  const yMax = Math.max(yMaxStage, rows[rows.length - 1].headY + 0.7);
 
   const xs = (x) => margin.left + (x - xMin) / (xMax - xMin) * innerW;
   const ys = (y) => margin.top + (1 - (y - yMin) / (yMax - yMin)) * innerH;
@@ -1285,15 +1541,63 @@ function renderSVG(rows) {
   parts.push(`<text class="svg-axistitle" x="${margin.left + innerW / 2}" y="${VBH - 12}" text-anchor="middle">${T('axis_h')}</text>`);
   parts.push(`<text class="svg-axistitle" x="${22}" y="${margin.top + innerH / 2}" text-anchor="middle" transform="rotate(-90 22 ${margin.top + innerH / 2})">${T('axis_v')}</text>`);
 
-  // Stage (-stageDepth → 0)
+  // Stage / Screen rendering based on focalType
   const stageX1 = xs(-inp.stageDepth);
   const stageX2 = xs(0);
   const stageY1 = ys(inp.stageHeight);
   const stageY2 = ys(0);
-  parts.push(`<rect class="svg-stage" x="${stageX1}" y="${stageY1}" width="${stageX2 - stageX1}" height="${stageY2 - stageY1}"/>`);
-  for (let h = 0; h < 6; h++) {
-    const yh = stageY1 + (stageY2 - stageY1) * (h + 0.5) / 6;
-    parts.push(`<line class="svg-stage-hatch" x1="${stageX1 + 3}" y1="${yh}" x2="${stageX2 - 3}" y2="${yh}"/>`);
+
+  if (inp.focalType === 'screen') {
+    // ===== SCREEN MODE: vertical screen rectangle above focal point =====
+    const scrTop = ys(inp.stageHeight + inp.screenHeight);
+    const scrBottom = ys(inp.stageHeight);
+    const scrThickness = (xs(0) - xs(-0.2));
+    // Screen rectangle
+    parts.push(`<rect class="svg-screen" x="${xs(-0.2)}" y="${scrTop}" width="${scrThickness}" height="${scrBottom - scrTop}"/>`);
+    // Diagonal lines indicating "screen" surface
+    for (let h = 0; h < 5; h++) {
+      const yy = scrTop + (scrBottom - scrTop) * (h + 0.5) / 5;
+      parts.push(`<line class="svg-stage-hatch" x1="${xs(-0.18)}" y1="${yy}" x2="${xs(-0.02)}" y2="${yy}"/>`);
+    }
+    // Critical sight line from first row to TOP of screen
+    if (rows.firstRowDiag && rows.firstRowDiag.type === 'screen') {
+      const fd = rows.firstRowDiag;
+      const sCls = fd.cls === 'bad' ? 'critical-bad' : (fd.cls === 'warn' ? 'critical-warn' : 'critical-ok');
+      parts.push(`<line class="svg-critical ${sCls}" x1="${xs(rows[0].x)}" y1="${ys(rows[0].eyeY)}" x2="${xs(0)}" y2="${ys(fd.screenTop)}"/>`);
+      // Angle annotation
+      const angleLabel = `${fd.angleTopDeg.toFixed(1)}°`;
+      const lx = (xs(rows[0].x) + xs(0)) / 2;
+      const ly = (ys(rows[0].eyeY) + ys(fd.screenTop)) / 2;
+      const lw = angleLabel.length * 6.2 + 10;
+      parts.push(`<rect class="svg-dim-text-bg" x="${lx - lw/2}" y="${ly - 8}" width="${lw}" height="14"/>`);
+      parts.push(`<text class="svg-critical-label ${sCls}" x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle">${angleLabel}</text>`);
+    }
+  } else {
+    // ===== STAGE / FLOOR MODE: stage rectangle =====
+    parts.push(`<rect class="svg-stage" x="${stageX1}" y="${stageY1}" width="${stageX2 - stageX1}" height="${stageY2 - stageY1}"/>`);
+    for (let h = 0; h < 6; h++) {
+      const yh = stageY1 + (stageY2 - stageY1) * (h + 0.5) / 6;
+      parts.push(`<line class="svg-stage-hatch" x1="${stageX1 + 3}" y1="${yh}" x2="${stageX2 - 3}" y2="${yh}"/>`);
+    }
+    // Blind zone visualization & critical sight line
+    if (rows.firstRowDiag && rows.firstRowDiag.type === 'stage') {
+      const fd = rows.firstRowDiag;
+      // Critical sight line from first row to back-stage floor
+      const sCls = fd.cls === 'bad' ? 'critical-bad' : (fd.cls === 'warn' ? 'critical-warn' : 'critical-ok');
+      parts.push(`<line class="svg-critical ${sCls}" x1="${xs(rows[0].x)}" y1="${ys(rows[0].eyeY)}" x2="${xs(fd.backStageX)}" y2="${ys(fd.minVisibleY)}"/>`);
+      // If blind zone exists, shade the unseen portion of back-stage floor
+      if (fd.blindHeight > 0.001) {
+        const blindCls = fd.cls === 'bad' ? 'svg-blind-bad' : 'svg-blind-warn';
+        parts.push(`<rect class="${blindCls}" x="${stageX1}" y="${ys(fd.minVisibleY)}" width="${stageX2 - stageX1}" height="${ys(inp.stageHeight) - ys(fd.minVisibleY)}"/>`);
+        // Label
+        const lblY = (ys(inp.stageHeight) + ys(fd.minVisibleY)) / 2;
+        const lblX = (stageX1 + stageX2) / 2;
+        const lblTxt = `${T('blind_zone')} ${(fd.blindHeight*1000).toFixed(0)} mm`;
+        const lblW = lblTxt.length * 6 + 12;
+        parts.push(`<rect class="svg-dim-text-bg" x="${lblX - lblW/2}" y="${lblY - 7}" width="${lblW}" height="14"/>`);
+        parts.push(`<text class="svg-critical-label ${sCls}" x="${lblX}" y="${lblY}" text-anchor="middle" dominant-baseline="middle">${lblTxt}</text>`);
+      }
+    }
   }
 
   // Floor profile
@@ -1326,7 +1630,7 @@ function renderSVG(rows) {
   const fpX = xs(0), fpY = ys(inp.stageHeight);
   rows.forEach((r, i) => {
     const hl = state.hl === i ? ' hl' : '';
-    parts.push(`<line class="svg-sight${hl}" x1="${fpX}" y1="${fpY}" x2="${xs(r.x)}" y2="${ys(r.eyeY)}"/>`);
+    parts.push(`<line class="svg-sight${hl}" data-row="${i}" x1="${fpX}" y1="${fpY}" x2="${xs(r.x)}" y2="${ys(r.eyeY)}"/>`);
   });
 
   // Spectators
@@ -1371,13 +1675,25 @@ function renderSVG(rows) {
 
   svg.querySelectorAll('.svg-head').forEach(el => {
     el.addEventListener('mouseenter', () => {
-      state.hl = parseInt(el.getAttribute('data-row'));
-      render();
+      setHighlight(parseInt(el.getAttribute('data-row')));
     });
     el.addEventListener('mouseleave', () => {
-      state.hl = null;
-      render();
+      setHighlight(null);
     });
+  });
+}
+
+function setHighlight(rowIdx) {
+  state.hl = rowIdx;
+  // Update sightline classes in SVG without re-rendering
+  document.querySelectorAll('#viz .svg-sight').forEach(el => {
+    const i = parseInt(el.getAttribute('data-row'));
+    el.classList.toggle('hl', rowIdx !== null && i === rowIdx);
+  });
+  // Update table row classes
+  document.querySelectorAll('#tbody tr').forEach(tr => {
+    const i = parseInt(tr.getAttribute('data-row'));
+    tr.classList.toggle('hl', i === rowIdx);
   });
 }
 
@@ -1436,39 +1752,152 @@ function renderWarnings(warnings) {
 // ============================================================
 function renderTable(rows) {
   const tbody = document.getElementById('tbody');
-  tbody.innerHTML = rows.map((r, i) => {
-    const hasOv = r.hasOverrideStep || r.hasOverrideSpacing;
-    const cPill = (r.C_primary === null)
-      ? '<span class="c-pill muted">—</span>'
-      : `<span class="c-pill ${r.cClass}">${(r.C_primary * 1000).toFixed(0)} mm</span>`;
-    const tags = [];
-    if (r.hasAisleBefore) tags.push(`<span class="tag aisle">${T('tag_aisle')}</span>`);
-    if (i > 0 && r.cClass === 'red') tags.push(`<span class="tag">${T('tag_critical')}</span>`);
-    const hl = state.hl === i ? 'hl' : '';
+  const inp = state.inputs;
+
+  // Dynamic header for view column
+  const thView = document.getElementById('th-view');
+  if (thView) {
+    thView.textContent = inp.focalType === 'screen' ? T('th_screen_angle') : T('th_blind');
+  }
+
+  // Build row HTML template (no values that change with override)
+  const buildRowHTML = (i) => {
+    const isFirst = i === 0;
     return `
-      <tr class="${hl}" data-row="${i}">
+      <tr data-row="${i}">
         <td><b style="color:var(--bright)">F${i + 1}</b></td>
-        <td>${i === 0
+        <td class="cell-spacing">${isFirst
           ? '<span style="color:var(--dim);">—</span>'
-          : `<input type="number" class="cell ${r.hasOverrideSpacing ? 'mod' : ''}" step="0.05" min="0.5" value="${r.spacingFromPrev.toFixed(2)}" data-row="${i}" data-field="spacing">`}</td>
-        <td>${i === 0
+          : `<input type="number" class="cell" step="0.05" min="0.5" data-row="${i}" data-field="spacing">`}</td>
+        <td class="step-cell">${isFirst
           ? '<span style="color:var(--dim);">—</span>'
-          : `<input type="number" class="cell ${r.hasOverrideStep ? 'mod' : ''}" step="5" min="0" value="${r.stepFromPrev_mm}" data-row="${i}" data-field="step">`}</td>
-        <td class="num">${r.x.toFixed(2)}</td>
-        <td class="num">${r.floorY.toFixed(3)}</td>
-        <td class="num">${r.eyeY.toFixed(3)}</td>
-        <td class="num">${i === 0 ? '—' : r.slopePct.toFixed(1) + '%'}</td>
-        <td>${cPill}</td>
-        <td>${tags.join(' ')}</td>
-        <td>${i > 0 ? `<button class="btn-reset" data-row="${i}" ${hasOv ? '' : 'disabled'}>${T('btn_reset_row')}</button>` : ''}</td>
+          : `<input type="number" class="cell" step="5" min="0" data-row="${i}" data-field="step"><span class="delta-badge-slot"></span>`}</td>
+        <td class="num cell-x">—</td>
+        <td class="num cell-yfloor">—</td>
+        <td class="num cell-yeye">—</td>
+        <td class="num cell-slope">—</td>
+        <td class="cell-c">—</td>
+        <td class="cell-view">—</td>
+        <td class="cell-tags"></td>
+        <td class="cell-reset">${isFirst ? '' : `<button class="btn-reset" data-row="${i}" disabled>${T('btn_reset_row')}</button>`}</td>
       </tr>
     `;
-  }).join('');
+  };
 
-  tbody.querySelectorAll('input.cell').forEach(inp => {
-    inp.addEventListener('change', onCellChange);
-    inp.addEventListener('input', onCellChange);
+  // Rebuild tbody only if row count changed or first render
+  const currentRowCount = tbody.querySelectorAll('tr').length;
+  if (currentRowCount !== rows.length) {
+    tbody.innerHTML = rows.map((_, i) => buildRowHTML(i)).join('');
+    wireRowEvents(tbody);
+  }
+
+  // Now update each row's content in-place
+  rows.forEach((r, i) => {
+    const tr = tbody.querySelector(`tr[data-row="${i}"]`);
+    if (!tr) return;
+
+    // X, Y, slope cells (always update)
+    tr.querySelector('.cell-x').textContent = r.x.toFixed(2);
+    tr.querySelector('.cell-yfloor').textContent = r.floorY.toFixed(3);
+    tr.querySelector('.cell-yeye').textContent = r.eyeY.toFixed(3);
+    tr.querySelector('.cell-slope').textContent = i === 0 ? '—' : r.slopePct.toFixed(1) + '%';
+
+    // C pill
+    const cCell = tr.querySelector('.cell-c');
+    cCell.innerHTML = (r.C_primary === null)
+      ? '<span class="c-pill muted">—</span>'
+      : `<span class="c-pill ${r.cClass}">${(r.C_primary * 1000).toFixed(0)} mm</span>`;
+
+    // View pill (blind / screen angle)
+    const vCell = tr.querySelector('.cell-view');
+    let viewPill = '<span class="c-pill muted">—</span>';
+    if (inp.focalType === 'screen' && r.screenAngleTopDeg !== null) {
+      viewPill = `<span class="c-pill view-${r.viewClass}">${r.screenAngleTopDeg.toFixed(1)}°</span>`;
+    } else if (r.blindHeight !== null && r.blindHeight !== undefined) {
+      const mm = r.blindHeight * 1000;
+      viewPill = mm < 0.5
+        ? '<span class="c-pill view-ok">0 mm</span>'
+        : `<span class="c-pill view-${r.viewClass}">${mm.toFixed(0)} mm</span>`;
+    }
+    vCell.innerHTML = viewPill;
+
+    // Tags
+    const tagsHTML = [];
+    if (r.hasAisleBefore) tagsHTML.push(`<span class="tag aisle">${T('tag_aisle')}</span>`);
+    if (i > 0 && r.cClass === 'red') tagsHTML.push(`<span class="tag">${T('tag_critical')}</span>`);
+    tr.querySelector('.cell-tags').innerHTML = tagsHTML.join(' ');
+
+    if (i === 0) return;
+
+    // Input cells — update value ONLY if not focused (preserve cursor)
+    const spacingInput = tr.querySelector('input[data-field="spacing"]');
+    const stepInput = tr.querySelector('input[data-field="step"]');
+    if (spacingInput && document.activeElement !== spacingInput) {
+      spacingInput.value = r.spacingFromPrev.toFixed(2);
+    }
+    if (stepInput && document.activeElement !== stepInput) {
+      stepInput.value = r.stepFromPrev_mm;
+    }
+
+    // Update classes on spacing input
+    if (spacingInput) {
+      spacingInput.classList.toggle('mod', r.hasOverrideSpacing);
+    }
+
+    // Update classes on step input (mod + IBC delta state)
+    if (stepInput) {
+      stepInput.classList.toggle('mod', r.hasOverrideStep);
+      stepInput.classList.toggle('delta-bad', r.riserDeltaClass === 'bad');
+      stepInput.classList.toggle('delta-mark', r.riserDeltaClass === 'mark');
+      stepInput.classList.toggle('delta-ok', r.riserDeltaClass === 'ok' && i > 1);
+
+      // Tooltip
+      let stepTitle = '';
+      if (r.riserDelta_mm !== null && r.riserDelta_mm !== undefined) {
+        const d = r.riserDelta_mm.toFixed(1);
+        if (r.riserDeltaClass === 'bad') stepTitle = T('tip_delta_bad', { V: d });
+        else if (r.riserDeltaClass === 'mark') stepTitle = T('tip_delta_mark', { V: d });
+        else stepTitle = T('tip_delta_ok', { V: d });
+      } else if (i === 1) {
+        stepTitle = T('tip_delta_firstpair');
+      } else if (r.hasAisleBefore) {
+        stepTitle = T('tip_delta_aisle');
+      }
+      stepInput.title = stepTitle;
+    }
+
+    // Δ badge
+    const deltaSlot = tr.querySelector('.delta-badge-slot');
+    if (deltaSlot) {
+      if (r.riserDelta_mm !== null && r.riserDelta_mm !== undefined) {
+        const d = r.riserDelta_mm.toFixed(1);
+        const cls = r.riserDeltaClass;
+        deltaSlot.innerHTML = `<span class="delta-badge ${cls}">Δ ${d}</span>`;
+      } else {
+        deltaSlot.innerHTML = '';
+      }
+    }
+
+    // Reset button
+    const resetBtn = tr.querySelector('.btn-reset');
+    if (resetBtn) {
+      const hasOv = r.hasOverrideStep || r.hasOverrideSpacing;
+      resetBtn.disabled = !hasOv;
+    }
+
+    // Row highlight (preserve hover state)
+    if (state.hl === i) tr.classList.add('hl');
+    else tr.classList.remove('hl');
   });
+}
+
+function wireRowEvents(tbody) {
+  // Wire input change handlers
+  tbody.querySelectorAll('input.cell').forEach(input => {
+    input.addEventListener('input', onCellChange);
+    input.addEventListener('change', onCellChange);
+  });
+  // Wire reset buttons
   tbody.querySelectorAll('button.btn-reset').forEach(btn => {
     btn.addEventListener('click', () => {
       const i = parseInt(btn.getAttribute('data-row'));
@@ -1476,10 +1905,11 @@ function renderTable(rows) {
       render();
     });
   });
+  // Wire row hover (highlight only, no re-render)
   tbody.querySelectorAll('tr').forEach(tr => {
     const i = parseInt(tr.getAttribute('data-row'));
-    tr.addEventListener('mouseenter', () => { state.hl = i; render(); });
-    tr.addEventListener('mouseleave', () => { state.hl = null; render(); });
+    tr.addEventListener('mouseenter', () => setHighlight(i));
+    tr.addEventListener('mouseleave', () => setHighlight(null));
   });
 }
 
@@ -1531,6 +1961,7 @@ function bindInputs() {
   bind('in-firstRowX', 'firstRowX');
   bind('in-stageHeight', 'stageHeight');
   bind('in-stageDepth', 'stageDepth');
+  bind('in-screenHeight', 'screenHeight');
   bind('in-numRows', 'numRows', true);
   bind('in-rowSpacing', 'rowSpacing');
   bind('in-defaultStep', 'defaultStep');
@@ -1539,6 +1970,7 @@ function bindInputs() {
 
   document.getElementById('in-focalType').addEventListener('change', (e) => {
     state.inputs.focalType = e.target.value;
+    updateScreenHeightVisibility();
     render();
   });
 
@@ -1586,7 +2018,13 @@ function bindInputs() {
   });
 }
 
+function updateScreenHeightVisibility() {
+  const el = document.getElementById('field-screenHeight');
+  if (el) el.style.display = state.inputs.focalType === 'screen' ? '' : 'none';
+}
+
 bindInputs();
+updateScreenHeightVisibility();
 applyLanguage();
 
 </script>
